@@ -3,7 +3,6 @@ SOURCES = src/main/java
 CLASSPATH = target
 BINDIR = bin
 
-PACKAGE_DIR = com/ass1
 JAVA_TARGET = 21
 
 JAVA_SOURCES = $(shell find $(SOURCES) -name '*.java')
