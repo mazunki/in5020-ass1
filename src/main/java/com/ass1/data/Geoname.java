@@ -23,14 +23,4 @@ public class Geoname {
 
 	}
 
-	public static void main(String[] args) {
-		Geoname sample = new Geoname(2798301, "Fleron", "BE", "Belgium", 15994, "Europe/Brussels", 50.61516,
-				5.68062);
-		long objectSize = ObjectSize.getObjectSize(sample);
-		int totalCities = 140574;
-		long totalMemoryUsage = objectSize * totalCities;
-
-		System.out.println("One city: " + objectSize + " bytes");
-		System.out.println("All cities: " + totalMemoryUsage/1024 + "kb");
-	}
 }

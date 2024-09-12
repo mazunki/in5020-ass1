@@ -32,10 +32,6 @@ $(SERVER_JAR): classfiles | $(BINDIR)
 $(PROXY_JAR): classfiles | $(BINDIR)
 	jar cfe $(PROXY_JAR) com.ass1.loadbalancer.ProxyServer -C $(CLASSPATH) .
 
-objsize: classfiles | $(BINDIR)
-	jar cfe geoname.jar com.ass1.data.Geoname -C $(CLASSPATH) .
-	jar cfe objsize.jar com.ass1.data.ObjectSize -C $(CLASSPATH) .
-
 jarfiles: $(CLIENT_JAR) $(SERVER_JAR) $(PROXY_JAR)
 
 classfiles: $(CLASS_FILES)
