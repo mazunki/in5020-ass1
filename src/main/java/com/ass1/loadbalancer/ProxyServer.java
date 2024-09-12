@@ -1,4 +1,4 @@
-package com.ass1.server;
+package com.ass1.loadbalancer;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -6,7 +6,9 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Iterator;
 import java.rmi.AlreadyBoundException;
+
 import com.ass1.*;
+import com.ass1.server.*;
 
 public class ProxyServer {
 	WraparoundTreeSet<Zone> zones = new WraparoundTreeSet<Zone>(); // guarantees order of elements, a formal
