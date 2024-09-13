@@ -40,6 +40,6 @@ public class Coordinate {
 	public String toString() {
 		String ns = (latitude >= 0 ? latitude + "°N" : -latitude + "°S");
 		String ew = (longitude >= 0 ? longitude + "°E" : -longitude + "°W");
-		return ns + ", " + ew;
+		return ns + "," + ew;
 	}
 };
