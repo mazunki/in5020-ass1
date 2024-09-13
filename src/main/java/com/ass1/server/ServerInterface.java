@@ -4,14 +4,18 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface ServerInterface extends Remote {
-    // Methods list
-    int getPopulationofCountry(String countryName) throws RemoteException;
-    int getNumberofCities(String countryName, int minPopulation) throws RemoteException;
-    int getNumberofCountries(int cityCount, int minPopulation) throws RemoteException;
-    int getNumberofCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException;
+	int getPopulationOfCountry(String[] args) throws RemoteException;
 
-    
+	int getPopulationOfCountry(String countryName) throws RemoteException;
+
+	int getNumberOfCities(String[] args) throws RemoteException;
+
+	int getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
+
+	int getNumberOfCountries(String[] args) throws RemoteException;
+
+	int getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException;
+
+	int getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException;
+
 }
-
-
-

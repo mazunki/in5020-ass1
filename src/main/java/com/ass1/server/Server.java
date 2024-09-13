@@ -26,8 +26,8 @@ public class Server implements ServerInterface {
 
 		// TODO: consider adding support for automatic server identifier names for zone
 
-		Server server = new Server(args[1]);
 		Identifier zoneId = new Identifier(args[0]);
+		Server server = new Server(args[1]);
 		server.stub = new ServerStub(server, zoneId);
 
 		server.launch();
@@ -39,7 +39,11 @@ public class Server implements ServerInterface {
 		}
 	}
 
-	public int getPopulationofCountry(String countryName) throws RemoteException {
+	public int getPopulationOfCountry(String[] args) throws RemoteException {
+		return this.getPopulationOfCountry(args[0]);
+	}
+
+	public int getPopulationOfCountry(String countryName) throws RemoteException {
 		int population = 0;
 
 		// Use the GeonameLoader to fetch cities for the given country name
@@ -52,7 +56,11 @@ public class Server implements ServerInterface {
 		return population;
 	}
 
-	public int getNumberofCities(String countryName, int minPopulation) throws RemoteException {
+	public int getNumberOfCities(String[] args) throws RemoteException {
+		return this.getNumberOfCities(args[0], Integer.parseInt(args[1]));
+	}
+
+	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
 		int cityCount = 0;
 
 		// Use the GeonameLoader to fetch cities for the given country name
@@ -67,7 +75,15 @@ public class Server implements ServerInterface {
 		return cityCount;
 	}
 
-	public int getNumberofCountries(int cityCount, int minPopulation) throws RemoteException {
+	public int getNumberOfCountries(String[] args) throws RemoteException {
+		if (args.length == 3) {
+			return this.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]),
+					Integer.parseInt(args[2]));
+		}
+		return this.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+	}
+
+	public int getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException {
 		List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
 		int matchingCountryCount = 0;
 
@@ -91,7 +107,7 @@ public class Server implements ServerInterface {
 		return matchingCountryCount;
 	}
 
-	public int getNumberofCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException {
+	public int getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException {
 		List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
 		int matchingCountryCount = 0;
 
@@ -113,6 +129,10 @@ public class Server implements ServerInterface {
 		}
 
 		return matchingCountryCount;
+	}
+
+	public Identifier getId() {
+		return this.id;
 	}
 
 	public String toString() {

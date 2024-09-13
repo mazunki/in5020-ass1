@@ -20,8 +20,6 @@ class WraparoundTreeSetIterator<T extends Identifiable & Comparable<T>> implemen
 	}
 
 	public T next() {
-		T curr = this.curr;
-
 		if (this.max != null) {
 			if (this.max <= 0) {
 				return null;
@@ -39,7 +37,7 @@ class WraparoundTreeSetIterator<T extends Identifiable & Comparable<T>> implemen
 
 		this.curr = next;
 
-		return curr;
+		return next;
 	}
 
 	public boolean hasNext() {
@@ -53,6 +51,10 @@ class WraparoundTreeSetIterator<T extends Identifiable & Comparable<T>> implemen
 public class WraparoundTreeSet<T extends Identifiable & Comparable<T>> extends TreeSet<T> {
 	public WraparoundTreeSet() {
 		super();
+	}
+
+	public T getObject(T obj) {
+		return this.getObject(obj);
 	}
 
 	public T getObjectById(Identifier id) {

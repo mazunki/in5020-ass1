@@ -7,25 +7,29 @@ import java.util.ArrayList;
 import com.ass1.*;
 
 public class Zone implements Identifiable, Comparable<Zone> {
-	HashMap<Server, Integer> servers = new HashMap<Server, Integer>();
+	HashMap<ServerInterface, Integer> servers = new HashMap<ServerInterface, Integer>();
 	Random random = new Random();
 	int maxRequests = 18;
 	int ongoingRequests = 0;
 	Identifier id;
 
-	public Zone(int id) {
-		this.id = new Identifier(id);
+	public Zone(Identifier id) {
+		this.id = id;
 	}
 
-	public void register(Server server) {
+	public Zone(int id) {
+		this(new Identifier(id));
+	}
+
+	public void register(ServerInterface server) {
 		this.servers.put(server, 0);
 	}
 
-	public void forget(Server server) {
+	public void forget(ServerInterface server) {
 		this.servers.remove(server);
 	}
 
-	public Server getServer() {
+	public ServerInterface getServer() {
 		/*
 		 * returns the first idle server on the zone, falling back to a random one.
 		 * assumes zone has at least one server in its pool
@@ -35,19 +39,19 @@ public class Zone implements Identifiable, Comparable<Zone> {
 		}
 
 		this.ongoingRequests++;
-		for (Map.Entry<Server, Integer> pair : this.servers.entrySet()) {
+		for (Map.Entry<ServerInterface, Integer> pair : this.servers.entrySet()) {
 			if (pair.getValue() == 0) {
-				Server s = pair.getKey();
+				ServerInterface s = pair.getKey();
 				this.servers.put(s, 1);
 				return s;
 			}
 		}
-		Server s = (new ArrayList<>(this.servers.keySet())).get(random.nextInt(this.servers.size()));
+		ServerInterface s = (new ArrayList<>(this.servers.keySet())).get(random.nextInt(this.servers.size()));
 		this.servers.put(s, this.servers.get(s) + 1);
 		return s;
 	}
 
-	public void releaseServer(Server s) {
+	public void releaseServer(ServerInterface s) {
 		this.ongoingRequests--;
 		this.servers.put(s, this.servers.get(s) - 1);
 	}

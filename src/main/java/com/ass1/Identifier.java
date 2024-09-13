@@ -1,6 +1,9 @@
 package com.ass1;
 
-public class Identifier { // this could kinda be a public record instead, but i prefer being explicit tbh
+import java.io.Serializable;
+
+public class Identifier implements Serializable { // this could kinda be a public record instead, but i prefer being
+							// explicit tbh
 	private final String _id;
 
 	public Identifier(String id) {
