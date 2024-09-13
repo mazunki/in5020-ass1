@@ -3,12 +3,12 @@ import java.util.HashMap;
 
 public class TestDataLoader {
     public static void main(String[] args) {
-        testLoadCityData("src/main/resources/exercise_1_dataset.csv", 5);
+        testLoadCityData(5);
     }
 
-    public static void testLoadCityData(String filePath, int limit) {
+    public static void testLoadCityData(int limit) {
         try {
-            HashMap<Integer, Geoname> data = GeonameLoader.loadCityData(filePath, 5);
+            HashMap<Integer, Geoname> data = GeonameLoader.loadCityData(5);
 
 
             for (Geoname geoname : data.values()) {
