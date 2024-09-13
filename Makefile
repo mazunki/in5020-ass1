@@ -53,6 +53,7 @@ all: jarfiles
 test: testfiles
 	@echo "Running tests..."
 	@java -cp $(CLASSPATH) com.ass1.data.TestDataLoader
+	@java -cp $(CLASSPATH) com.ass1.server.TestServer
 
 .PHONY: all purge clean test
 .DEFAULT_GOAL := classfiles
