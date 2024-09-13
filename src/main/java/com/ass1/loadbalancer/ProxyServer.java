@@ -3,9 +3,7 @@ package com.ass1.loadbalancer;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Iterator;
-import java.rmi.AlreadyBoundException;
 
 import com.ass1.*;
 import com.ass1.server.*;
@@ -15,18 +13,21 @@ public class ProxyServer {
 									// requirement
 	int maxNeighbourDistance = 2;
 
-	public static void main(String[] args) {
-		try {
-			Registry registry = LocateRegistry.createRegistry(1234);
-			Server server = new Server();
-			ServerInterface serverStub = (ServerInterface) UnicastRemoteObject.exportObject(server, 0);
-			registry.bind("server", serverStub);
+	public ProxyServer(int port) throws RemoteException {
+		System.out.println("Starting proxy server...");
 
-			while (true) {
-			}
-		} catch (RemoteException | AlreadyBoundException e) {
-			e.printStackTrace();
+		Registry registry = LocateRegistry.createRegistry(port);
+		System.out.println("ProxyServer is listening on port " + port);
+	}
+
+	public void start() {
+		while (true) {
 		}
+	}
+
+	public static void main(String[] args) throws RemoteException {
+		ProxyServer proxyserver = new ProxyServer(1099);
+		proxyserver.start();
 
 	}
 
