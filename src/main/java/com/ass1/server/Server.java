@@ -1,33 +1,93 @@
 package com.ass1.server;
 
+import com.ass1.data.Geoname;
+import com.ass1.data.GeonameLoader;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.rmi.AlreadyBoundException;
+import java.util.List;
 
-public class Server implements ServerInterface {
-	public int Add(int num1, int num2) {
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return num1 + num2;
+public class Server extends UnicastRemoteObject implements ServerInterface {
+
+	public Server() throws RemoteException {
+		super();
 	}
 
-	public static void main(String[] args) {
-		try {
-			Registry registry = LocateRegistry.createRegistry(1234);
-			Server server = new Server();
-			ServerInterface serverStub = (ServerInterface) UnicastRemoteObject.exportObject(server, 0);
-			registry.bind("server", serverStub);
+	    public int getPopulationofCountry(String countryName) throws RemoteException {
+			int population = 0;
 
-			while (true) {
+			// Use the GeonameLoader to fetch cities for the given country name
+			List<Geoname> cities = GeonameLoader.getByName(countryName);
+
+			for (Geoname city : cities) {
+				population += city.getPopulation();
 			}
-		} catch (RemoteException | AlreadyBoundException e) {
-			e.printStackTrace();
-		}
 
-	}
+			return population;
+    }
+
+	public int getNumberofCities(String countryName, int minPopulation) throws RemoteException {
+        int cityCount = 0;
+
+        // Use the GeonameLoader to fetch cities for the given country name
+        List<Geoname> cities = GeonameLoader.getByName(countryName);
+
+        for (Geoname city : cities) {
+            if (city.getPopulation() >= minPopulation) {
+                cityCount++;
+            }
+        }
+
+        return cityCount;
+    }
+
+	public int getNumberofCountries(int cityCount, int minPopulation) throws RemoteException {
+        List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
+        int matchingCountryCount = 0;
+
+        for (String countryName : countryNames) {
+            int matchingCityCount = 0;
+
+            List<Geoname> cities = GeonameLoader.getByName(countryName);
+
+            for (Geoname city : cities) {
+                if (city.getPopulation() >= minPopulation) {
+                    matchingCityCount++;
+                }
+
+                if (matchingCityCount >= cityCount) {
+                    matchingCountryCount++;
+                    break;
+                }
+            }
+        }
+
+        return matchingCountryCount;
+    }
+
+	public int getNumberofCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException {
+        List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
+        int matchingCountryCount = 0;
+
+        for (String countryName : countryNames) {
+            int matchingCityCount = 0;
+
+            List<Geoname> cities = GeonameLoader.getByName(countryName);
+
+            for (Geoname city : cities) {
+                if (city.getPopulation() >= minPopulation && city.getPopulation() <= maxPopulation) {
+                    matchingCityCount++;
+                }
+
+                if (matchingCityCount >= cityCount) {
+                    matchingCountryCount++;
+                    break;
+                }
+            }
+        }
+
+        return matchingCountryCount;
+    }
 }
+
+
+
