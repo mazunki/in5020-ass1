@@ -49,4 +49,32 @@ public class Geoname {
                 + "coordinates=" + coordinates
                 + ">";
     }
+
+	public int getID() {
+		return this.id;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getCountryCode() {
+		return this.countryCode;
+	}
+
+	public String getCountryName() {
+		return this.countryName;
+	}
+
+	public String getTimezone() {
+		return this.timezone;
+	}
+
+	public Coordinate getCoordinates() {
+		return this.coordinates;
+	}
+
+	public int getPopulation() {
+		return this.population;
+	}
 }
