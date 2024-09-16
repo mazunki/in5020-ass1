@@ -17,20 +17,20 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	Registry registry;
 
 	public ProxyServer(int port) throws RemoteException {
-		System.out.println("Starting proxy server");
+		System.out.println("[proxy] Starting proxy server");
 
 		this.registry = LocateRegistry.createRegistry(port);
 		registry.rebind(PROXY_IDENTIFIER, this);
 
-		System.out.println("ProxyServer listening on port " + port);
+		System.out.println("[proxy] ProxyServer listening on port " + port);
 	}
 
 	public void register(Zone zone) throws RemoteException {
 		if (this.zones.getObject(zone) == null) {
 			zones.add(zone);
-			System.out.println("Added new zone: " + zone);
+			System.out.println("[proxy] Added new zone: " + zone);
 		} else {
-			System.err.println("Attmpted to register duplicate zone: " + zone.getId());
+			System.err.println("[proxy] Attmpted to register duplicate zone: " + zone.getId());
 		}
 	}
 
@@ -38,16 +38,16 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		if (this.zones.getObjectById(zoneId) == null) {
 			Zone zone = new Zone(zoneId);
 			this.zones.add(zone);
-			System.out.println("Added new zone: " + zone);
+			System.out.println("[proxy] Added new zone: " + zone);
 		} else {
-			System.err.println("Attmpted to register duplicate zone: " + zoneId);
+			System.err.println("[proxy] Attmpted to register duplicate zone: " + zoneId);
 		}
 	}
 
 	public void unregister(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
 		Zone zone = this.zones.getObjectById(zoneId);
 		zone.forget(server);
-		System.out.println("Server '" + serverId + "' left " + zone);
+		System.out.println("[proxy] Server '" + serverId + "' left " + zone);
 	}
 
 	public void register(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
@@ -58,7 +58,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 
 		zone.register(server);
-		System.out.println("Registered new server '" + serverId + "' on " + zone);
+		System.out.println("[proxy] Registered new server '" + serverId + "' on " + zone);
 	}
 
 	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {
@@ -76,12 +76,12 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	}
 
 	public void start() {
-		System.out.println("ProxyServer started and ready to handle requests");
+		System.out.println("[proxy] ProxyServer started and ready to handle requests");
 		while (true) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				System.out.println("Shutting down Proxy Server");
+				System.out.println("[proxy] Shutting down Proxy Server");
 				return;
 			}
 		}

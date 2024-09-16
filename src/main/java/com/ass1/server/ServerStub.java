@@ -28,11 +28,11 @@ public class ServerStub extends RMISocketFactory implements ServerStubInterface 
 
 	@Override
 	public Socket createSocket(String host, int port) throws IOException {
-		System.out.println("got connection");
+		System.out.println("[serverstub] Got connection");
 		try {
 			Thread.sleep(80);
 		} catch (InterruptedException e) {
-			throw new RuntimeException("couldn't sleep during socket creation");
+			throw new RuntimeException("[serverstub] couldn't sleep during socket creation");
 		}
 		return new Socket(host, port);
 	}
@@ -43,7 +43,7 @@ public class ServerStub extends RMISocketFactory implements ServerStubInterface 
 	}
 
 	private void registerToProxyServer() throws RemoteException {
-		System.out.println("Connecting to ProxyServer");
+		System.out.println("[serverstub] Connecting to ProxyServer");
 
 		Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1099);
 
@@ -58,7 +58,7 @@ public class ServerStub extends RMISocketFactory implements ServerStubInterface 
 		proxyServer.register(srv, this.zoneId, this.server.getId());
 
 		String serverRegister = this.getRegistryName();
-		System.out.println("Registered " + serverRegister + " on proxy server");
+		System.out.println("[serverstub] Registered " + serverRegister + " on proxy server");
 	}
 
 	public Object call(String method, Object[] args) {
@@ -107,7 +107,7 @@ public class ServerStub extends RMISocketFactory implements ServerStubInterface 
 				try {
 					proxyServer.unregister(server, zoneId, server.getId());
 				} catch (RemoteException e) {
-					System.err.println("failed to unregister " + getRegistryName());
+					System.err.println("[serverstub] failed to unregister " + getRegistryName());
 				}
 			}
 		});
