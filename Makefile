@@ -43,7 +43,6 @@ testfiles: $(TEST_CLASS_FILES)
 
 clean:
 	rm -rf $(CLASSPATH)
-	rm -rf .settings .classpath .project
 
 purge: clean
 	rm -rf $(BINDIR)/*.jar
