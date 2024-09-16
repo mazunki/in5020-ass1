@@ -44,6 +44,12 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 	}
 
+	public void unregister(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
+		Zone zone = this.zones.getObjectById(zoneId);
+		zone.forget(server);
+		System.out.println("Server '" + serverId + "' left " + zone);
+	}
+
 	public void register(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
 		Zone zone = zones.getObjectById(zoneId);
 		if (zone == null) {
@@ -52,7 +58,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 
 		zone.register(server);
-		System.out.println("Added new server: '" + serverId + "' @ zone: '" + zoneId + "'");
+		System.out.println("Registered new server '" + serverId + "' on " + zone);
 	}
 
 	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {

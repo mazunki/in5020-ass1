@@ -33,6 +33,19 @@ public class Server implements ServerInterface {
 		server.launch();
 	}
 
+	public void simulateExecutionDelay() {
+		try {
+			Thread.sleep(80);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("couldn't add fake execution delay");
+		}
+
+	}
+
+	public boolean locatedAt(Identifier zoneId) {
+		return this.stub.zoneId.equals(zoneId);
+	}
+
 	public void launch() {
 		while (this.stub.isAlive()) {
 			this.stub.spin();

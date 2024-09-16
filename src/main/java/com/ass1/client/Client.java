@@ -9,7 +9,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
 
-import com.ass1.server.ServerInterface;
+import com.ass1.server.*;
 import com.ass1.*;
 import com.ass1.loadbalancer.ProxyServerInterface;
 
@@ -51,34 +51,28 @@ public class Client {
 		}
 	}
 
-	// Method getMethod(String name, int argcount) throws NoSuchMethodException {
-	// for (Method m : this.server.getClass().getMethods()) {
-	// if (m.getName().equals(name) && m.getParameterCount() == argcount) {
-	// return m;
-	// }
-	// }
-	// throw new NoSuchMethodException("No such method: '" + name + "' on server");
-	// }
-
-	public Object makeQuery(String method, String[] args) {
-		Method callable;
-
+	private void addNetworkDelay() {
 		try {
-			callable = server.getClass().getMethod(method, String[].class);
-		} catch (NoSuchMethodException e) {
-			throw new IllegalArgumentException("No such method: '" + method + "'");
+			Thread.sleep(80);
+			if (!this.server.locatedAt(this.zoneId)) {
+				Thread.sleep(90); // 80 + 90 = 170
+			}
+		} catch (RemoteException e) {
+			throw new RuntimeException("Failed to ask where server is located at");
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Couldn't sleep on the (network) bus");
 		}
+	}
 
-		Object result;
+	public Object makeQuery(String method, Object[] args) {
+		this.addNetworkDelay(); // request Client => Server
 		try {
-			result = callable.invoke(this.server, (Object) args);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException("You are not allowed to run this method! 😡");
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException("Failed to invoke method...");
+			// return this.server.call(method, args);
+			throw new RemoteException("brrr FIXME");
+		} catch (RemoteException e) {
+			System.err.println("failed to call server");
+			return null;
 		}
-
-		return result;
 	}
 
 	public static void main(String[] args) {

@@ -29,6 +29,11 @@ public class Zone implements Identifiable, Comparable<Zone> {
 		this.servers.remove(server);
 	}
 
+	public Server getObjectById(Identifier serverId) {
+
+		throw new RuntimeException("wtf was this?");
+	}
+
 	public ServerInterface getServer() {
 		/*
 		 * returns the first idle server on the zone, falling back to a random one.
@@ -64,8 +69,9 @@ public class Zone implements Identifiable, Comparable<Zone> {
 	public String toString() {
 		return "Zone<"
 				+ this.id + ", "
-				+ "#" + String.valueOf(this.servers.size()) + ", "
+				+ "" + String.valueOf(this.servers.size()) + " online, "
 				+ String.valueOf(this.ongoingRequests) + "/" + String.valueOf(this.maxRequests)
+				+ " requests"
 				+ ">";
 	}
 
