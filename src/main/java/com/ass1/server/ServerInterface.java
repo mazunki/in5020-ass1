@@ -6,9 +6,7 @@ import java.rmi.RemoteException;
 import com.ass1.Identifier;
 
 public interface ServerInterface extends Remote {
-	// Object call(String method, Object[] args) throws RemoteException;
-
-	void simulateExecutionDelay() throws RemoteException;
+	int EXECUTION_DELAY = 10000; // ms
 
 	boolean locatedAt(Identifier zoneId) throws RemoteException;
 

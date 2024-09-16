@@ -1,7 +1,5 @@
 package com.ass1.client;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -53,10 +51,8 @@ public class Client {
 
 	private void addNetworkDelay() {
 		try {
-			Thread.sleep(80);
-			if (!this.server.locatedAt(this.zoneId)) {
-				Thread.sleep(90); // 80 + 90 = 170
-			}
+			int ms = (this.server.locatedAt(this.zoneId)) ? Zone.LOCAL_DELAY : Zone.EXTERN_DELAY;
+			Thread.sleep(ms);
 		} catch (RemoteException e) {
 			throw new RuntimeException("Failed to ask where server is located at");
 		} catch (InterruptedException e) {
@@ -64,14 +60,57 @@ public class Client {
 		}
 	}
 
-	public Object makeQuery(String method, Object[] args) {
-		this.addNetworkDelay(); // request Client => Server
+	public Object makeQuery(String method, String[] args) {
 		try {
-			// return this.server.call(method, args);
-			throw new RemoteException("brrr FIXME");
+			// NOTE: kinda wish there was a better way to do this lol. is there any?
+			switch (method) {
+				case "getPopulationOfCountry":
+					switch (args.length) {
+						case 1:
+							this.addNetworkDelay();
+							return this.server.getPopulationOfCountry(args[0]);
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 1 argument.");
+					}
+				case "getNumberOfCities":
+					switch (args.length) {
+						case 2:
+							this.addNetworkDelay();
+							return this.server.getNumberOfCities(args[0],
+									Integer.parseInt(args[1]));
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 2 arguments.");
+					}
+
+				case "getNumberOfCountries": {
+					switch (args.length) {
+						case 2:
+							this.addNetworkDelay();
+							return this.server.getNumberOfCountries(
+									Integer.parseInt(args[0]),
+									Integer.parseInt(args[1]));
+						case 3:
+							this.addNetworkDelay();
+							return this.server.getNumberOfCountries(
+									Integer.parseInt(args[0]),
+									Integer.parseInt(args[1]),
+									Integer.parseInt(args[2]));
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 2 or 3 arguments.");
+					}
+				}
+				default:
+					throw new RuntimeException("No such function");
+			}
+		} catch (ClassCastException e) {
+			throw new RuntimeException("Invalid typecasting performed");
+		} catch (ArrayIndexOutOfBoundsException e) {
+			throw new RuntimeException("Invalid number of arguments for function");
 		} catch (RemoteException e) {
-			System.err.println("failed to call server");
-			return null;
+			throw new RuntimeException("Failed to call server");
 		}
 	}
 

@@ -6,6 +6,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import com.ass1.*;
 import com.ass1.server.*;
@@ -21,7 +23,6 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 
 		this.registry = LocateRegistry.createRegistry(port);
 		registry.rebind(PROXY_IDENTIFIER, this);
-
 		System.out.println("[proxy] ProxyServer listening on port " + port);
 	}
 
@@ -45,6 +46,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	}
 
 	public void unregister(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
+		System.out.println("[proxy] Server '" + serverId + "' wants to leave from " + zoneId);
 		Zone zone = this.zones.getObjectById(zoneId);
 		zone.forget(server);
 		System.out.println("[proxy] Server '" + serverId + "' left " + zone);
@@ -61,6 +63,17 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		System.out.println("[proxy] Registered new server '" + serverId + "' on " + zone);
 	}
 
+	public void releaseServer(ServerInterface server) throws RemoteException {
+		Iterator<Zone> neigbhours = this.zones.iterator();
+		while (neigbhours.hasNext()) {
+			Zone z = neigbhours.next();
+			if (server.locatedAt(z.getId())) {
+				z.releaseServer(server);
+				return;
+			}
+		}
+	}
+
 	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {
 		Iterator<Zone> neigbhours = this.zones.iterator(this.zones.getObjectById(zoneId),
 				this.maxNeighbourDistance);
@@ -68,7 +81,10 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		while (neigbhours.hasNext()) {
 			Zone zone = neigbhours.next();
 			if (zone.isChilling()) {
+				System.out.println("[proxy] Found available zone for " + zoneId + ": " + zone);
 				return zone.getServer();
+			} else {
+				System.out.println("[proxy] Skipping " + zone + " as it had performative anxiety");
 			}
 		}
 
@@ -76,12 +92,12 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	}
 
 	public void start() {
-		System.out.println("[proxy] ProxyServer started and ready to handle requests");
+		System.out.println("[proxy] ProxyServer started and ready to receive servers");
 		while (true) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				System.out.println("[proxy] Shutting down Proxy Server");
+				System.out.println("Shutting down Proxy Server");
 				return;
 			}
 		}

@@ -11,12 +11,14 @@ public class Server implements ServerInterface {
 	Identifier id;
 	ServerStub stub;
 
-	public Server(Identifier serverId) throws RemoteException {
+	public Server(Identifier serverId, Identifier zoneId) throws RemoteException {
 		this.id = serverId;
+		this.stub = new ServerStub(this, zoneId);
 	}
 
-	public Server(String serverId) throws RemoteException {
+	public Server(String serverId, String zoneId) throws RemoteException {
 		this.id = new Identifier(serverId);
+		this.stub = new ServerStub(this, new Identifier(zoneId));
 	}
 
 	public static void main(String[] args) throws RemoteException {
@@ -26,20 +28,8 @@ public class Server implements ServerInterface {
 
 		// TODO: consider adding support for automatic server identifier names for zone
 
-		Identifier zoneId = new Identifier(args[0]);
-		Server server = new Server(args[1]);
-		server.stub = new ServerStub(server, zoneId);
-
+		Server server = new Server(args[1], args[0]);
 		server.launch();
-	}
-
-	public void simulateExecutionDelay() {
-		try {
-			Thread.sleep(80);
-		} catch (InterruptedException e) {
-			throw new RuntimeException("couldn't add fake execution delay");
-		}
-
 	}
 
 	public boolean locatedAt(Identifier zoneId) {
@@ -76,7 +66,6 @@ public class Server implements ServerInterface {
 	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
 		int cityCount = 0;
 
-		// Use the GeonameLoader to fetch cities for the given country name
 		List<Geoname> cities = GeonameLoader.getByName(countryName);
 
 		for (Geoname city : cities) {
