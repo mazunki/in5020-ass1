@@ -1,7 +1,5 @@
 #!/bin/sh
 
-PROXYPID=
-
 proxy() {
 	java -jar bin/proxy.jar &
 	PROXYPID=$!
