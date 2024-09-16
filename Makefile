@@ -42,11 +42,11 @@ classfiles: $(CLASS_FILES)
 testfiles: $(TEST_CLASS_FILES)
 
 clean:
-	rm -rf $(CLASSPATH)/*.jar
+	rm -rf $(CLASSPATH)
 	rm -rf .settings .classpath .project
 
 purge: clean
-	rm -rf $(BINDIR)
+	rm -rf $(BINDIR)/*.jar
 
 all: jarfiles
 
