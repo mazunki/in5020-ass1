@@ -9,9 +9,9 @@ public class TestServer {
             Server server = new Server("test");
 
             // Test 1: getPopulationofCountry
-            System.out.println("Test 1: getPopulationofCountry");
+            System.out.println("Test 1: getPopulationOfCountry");
             String countryName = "Norway";
-            int population = server.getPopulationofCountry(countryName);
+            int population = server.getPopulationOfCountry(countryName);
             int expectedPopulation = 3162856; // Expected population of Norway
             System.out.println("Country: " + countryName + ", Expected Population: " + expectedPopulation);
             System.out.println("Actual Population: " + population);
@@ -21,7 +21,7 @@ public class TestServer {
             System.out.println("\nTest 2: getNumberofCities");
             countryName = "Norway";
             int minPopulation = 100000;
-            int numberOfCities = server.getNumberofCities(countryName, minPopulation);
+            int numberOfCities = server.getNumberOfCities(countryName, minPopulation);
             int expectedNumberOfCities = 4; // Norway should have 4 cities with population >= 100,000
             System.out.println("Country: " + countryName + ", Min Population: " + minPopulation);
             System.out.println("Expected Number of Cities: " + expectedNumberOfCities);
@@ -32,7 +32,7 @@ public class TestServer {
             System.out.println("\nTest 3: getNumberofCountries (cityCount = 2, minPopulation = 5,000,000)");
             int cityCount = 2;
             minPopulation = 5000000;
-            int numberOfCountries = server.getNumberofCountries(cityCount, minPopulation);
+            int numberOfCountries = server.getNumberOfCountries(cityCount, minPopulation);
             int expectedNumberOfCountries = 7; // Expecting 7 countries with at least 2 cities having population >= 5,000,000
             System.out.println("Expected Number of Countries: " + expectedNumberOfCountries);
             System.out.println("Actual Number of Countries: " + numberOfCountries);
@@ -43,7 +43,7 @@ public class TestServer {
             cityCount = 30;
             minPopulation = 100000;
             int maxPopulation = 800000;
-            numberOfCountries = server.getNumberofCountries(cityCount, minPopulation, maxPopulation);
+            numberOfCountries = server.getNumberOfCountries(cityCount, minPopulation, maxPopulation);
             expectedNumberOfCountries = 30; // Expecting 30 countries with at least 30 cities having population between 100,000 and 800,000
             System.out.println("Expected Number of Countries: " + expectedNumberOfCountries);
             System.out.println("Actual Number of Countries: " + numberOfCountries);
