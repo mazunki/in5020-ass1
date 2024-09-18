@@ -1,5 +1,8 @@
 package com.ass1.client;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,11 +17,21 @@ import com.ass1.loadbalancer.ProxyServerInterface;
 public class Client {
 	final static String PROXY_SERVER = "127.0.0.1";
 	final static int PROXY_PORT = 1099;
+	final static int CacheStr = 45;
 	Identifier zoneId;
 
 	Registry proxyRegistry;
 	ProxyServerInterface proxyServer;
 	ServerInterface server;
+
+	private Map<String, Object> cacheBaby = new LinkedHashMap<String, Object>(CacheStr, 0.75f, true){
+		@Override
+		//generert ved hjelp av intellij
+		protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
+			return size() > CacheStr;
+		}
+	};
+
 
 	public Client(String zoneId) {
 		this.zoneId = new Identifier(zoneId);
@@ -59,52 +72,59 @@ public class Client {
 			throw new RuntimeException("Couldn't sleep on the (network) bus");
 		}
 	}
+	private String cacheKeyGenerator(String metode, String[] args) {
+		return metode + ":" + String.join(";", args);
+	}
 
 	public Object makeQuery(String method, String[] args) {
+		String cacheKey = cacheKeyGenerator(method, args);
+
+		if (cacheBaby.containsKey(cacheKey)) {
+			System.out.println("Cache eksisterer i " + cacheKey);
+			return cacheBaby.get(cacheKey);
+		}
+
+		Object result = null;
+
 		try {
-			// NOTE: kinda wish there was a better way to do this lol. is there any?
 			switch (method.toLowerCase()) {
 				case "getpopulationofcountry":
-					switch (args.length) {
-						case 1:
-							this.addNetworkDelay();
-							return this.server.getPopulationOfCountry(args[0]);
-						default:
-							throw new IllegalArgumentException(
-									"This function requires 1 argument.");
+					if (args.length == 1) {
+						this.addNetworkDelay();
+						result = this.server.getPopulationOfCountry(args[0]);
+					} else {
+						throw new IllegalArgumentException("This function requires 1 argument.");
 					}
-				case "getnumberofcities":
-					switch (args.length) {
-						case 2:
-							this.addNetworkDelay();
-							return this.server.getNumberOfCities(args[0],
-									Integer.parseInt(args[1]));
-						default:
-							throw new IllegalArgumentException(
-									"This function requires 2 arguments.");
-					}
+					break;
 
-				case "getnumberofcountries": {
-					switch (args.length) {
-						case 2:
-							this.addNetworkDelay();
-							return this.server.getNumberOfCountries(
-									Integer.parseInt(args[0]),
-									Integer.parseInt(args[1]));
-						case 3:
-							this.addNetworkDelay();
-							return this.server.getNumberOfCountries(
-									Integer.parseInt(args[0]),
-									Integer.parseInt(args[1]),
-									Integer.parseInt(args[2]));
-						default:
-							throw new IllegalArgumentException(
-									"This function requires 2 or 3 arguments.");
+				case "getnumberofcities":
+					if (args.length == 2) {
+						this.addNetworkDelay();
+						result = this.server.getNumberOfCities(args[0], Integer.parseInt(args[1]));
+					} else {
+						throw new IllegalArgumentException("This function requires 2 arguments.");
 					}
-				}
+					break;
+
+				case "getnumberofcountries":
+					if (args.length == 2) {
+						this.addNetworkDelay();
+						result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+					} else if (args.length == 3) {
+						this.addNetworkDelay();
+						result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+					} else {
+						throw new IllegalArgumentException("This function requires 2 or 3 arguments.");
+					}
+					break;
+
 				default:
 					throw new RuntimeException("No such function");
 			}
+
+			cacheBaby.put(cacheKey, result);
+			System.out.println("Cache miss for " + cacheKey + ". Caching result.");
+
 		} catch (ClassCastException e) {
 			throw new RuntimeException("Invalid typecasting performed");
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -112,7 +132,10 @@ public class Client {
 		} catch (RemoteException e) {
 			throw new RuntimeException("Failed to call server");
 		}
+
+		return result;
 	}
+
 
 	public static void main(String[] args) {
 		/*
