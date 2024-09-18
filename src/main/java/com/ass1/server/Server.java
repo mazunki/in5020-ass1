@@ -49,6 +49,11 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPopulationOfCountry(String[] args) throws RemoteException {
+		try {
+			Thread.sleep(50); // real slow funciton fr fr no cap
+		} catch (InterruptedException e) {
+			System.err.println("uhh what");
+		}
 		return this.getPopulationOfCountry(args[0]);
 	}
 
