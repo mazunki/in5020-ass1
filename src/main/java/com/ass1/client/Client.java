@@ -75,6 +75,9 @@ public class Client {
 					}
 				case "getnumberofcities":
 					switch (args.length) {
+						case 1:
+							this.addNetworkDelay();
+							return this.server.getNumberOfCities(args[0]);
 						case 2:
 							this.addNetworkDelay();
 							return this.server.getNumberOfCities(args[0],

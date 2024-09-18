@@ -6,7 +6,7 @@ import java.rmi.RemoteException;
 import com.ass1.Identifier;
 
 public interface ServerInterface extends Remote {
-	int EXECUTION_DELAY = 18; // ms
+	int EXECUTION_DELAY = 40; // ms
 
 	boolean locatedAt(Identifier zoneId) throws RemoteException;
 
@@ -15,6 +15,8 @@ public interface ServerInterface extends Remote {
 	int getPopulationOfCountry(String countryName) throws RemoteException;
 
 	int getNumberOfCities(String[] args) throws RemoteException;
+
+	int getNumberOfCities(String countryName) throws RemoteException;
 
 	int getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
 
