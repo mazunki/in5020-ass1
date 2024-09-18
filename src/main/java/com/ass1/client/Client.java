@@ -63,8 +63,8 @@ public class Client {
 	public Object makeQuery(String method, String[] args) {
 		try {
 			// NOTE: kinda wish there was a better way to do this lol. is there any?
-			switch (method) {
-				case "getPopulationOfCountry":
+			switch (method.toLowerCase()) {
+				case "getpopulationofcountry":
 					switch (args.length) {
 						case 1:
 							this.addNetworkDelay();
@@ -73,7 +73,7 @@ public class Client {
 							throw new IllegalArgumentException(
 									"This function requires 1 argument.");
 					}
-				case "getNumberOfCities":
+				case "getnumberofcities":
 					switch (args.length) {
 						case 2:
 							this.addNetworkDelay();
@@ -84,7 +84,7 @@ public class Client {
 									"This function requires 2 arguments.");
 					}
 
-				case "getNumberOfCountries": {
+				case "getnumberofcountries": {
 					switch (args.length) {
 						case 2:
 							this.addNetworkDelay();
@@ -123,7 +123,7 @@ public class Client {
 			throw new IllegalArgumentException(
 					"At minimum, specify which method to run, and which zone to connect to");
 		}
-		String zoneId = args[args.length - 1];
+		String zoneId = args[args.length - 1].replaceFirst("Zone:", "");
 		String method = args[0];
 		String[] query_args = Arrays.copyOfRange(args, 1, args.length - 1);
 
