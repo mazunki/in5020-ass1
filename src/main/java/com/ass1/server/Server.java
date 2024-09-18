@@ -11,9 +11,6 @@ import com.ass1.data.GeonameLoader;
 import com.ass1.*;
 
 public class Server implements ServerInterface {
-
-
-
 	Identifier id;
 	ServerStub stub;
 
@@ -66,6 +63,10 @@ public class Server implements ServerInterface {
 		for (Geoname city : cities) {
 			population += city.getPopulation();
 		}
+
+
+		cache.put(countryName, population);
+		System.out.println("Befolkning for " + countryName + "lagt til chache");
 
 		return population;
 	}

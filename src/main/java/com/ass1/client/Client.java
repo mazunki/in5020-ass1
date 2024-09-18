@@ -27,6 +27,15 @@ public class Client {
 
 
 
+	private Map<String, Object> cacheBaby = new LinkedHashMap<String, Object>(CacheStr, 0.75f, true){
+		@Override
+		//generert ved hjelp av intellij
+		protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
+			return size() > CacheStr;
+		}
+	};
+
+
 	public Client(String zoneId) {
 		this.zoneId = new Identifier(zoneId);
 
@@ -67,6 +76,9 @@ public class Client {
 		} catch (InterruptedException e) {
 			throw new RuntimeException("Couldn't sleep on the (network) bus");
 		}
+	}
+	private String cacheKeyGenerator(String metode, String[] args) {
+		return metode + ":" + String.join(";", args);
 	}
 
 
@@ -139,6 +151,9 @@ public class Client {
 				default:
 					throw new RuntimeException("No such function");
 			}
+
+			cacheBaby.put(cacheKey, result);
+			System.out.println("Cache miss for " + cacheKey + ". Caching result.");
 
 		} catch (ClassCastException e) {
 			throw new RuntimeException("Invalid typecasting performed");
