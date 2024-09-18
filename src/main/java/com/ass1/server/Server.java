@@ -1,5 +1,8 @@
 package com.ass1.server;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -8,6 +11,16 @@ import com.ass1.data.GeonameLoader;
 import com.ass1.*;
 
 public class Server implements ServerInterface {
+	private static final int CACHE_LIMIT = 150;
+
+	private Map<String, Integer> cache = new LinkedHashMap<String, Integer>(CACHE_LIMIT, 0.75f, true) {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+			return size() > CACHE_LIMIT;
+		}
+	};
+
+
 	Identifier id;
 	ServerStub stub;
 
@@ -47,14 +60,25 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPopulationOfCountry(String countryName) throws RemoteException {
+
+		if (cache.containsKey(countryName)){
+			System.out.println("Befolkning fra chache " + countryName);
+
+		return cache.get(countryName);
+	}
+
 		int population = 0;
 
-		// Use the GeonameLoader to fetch cities for the given country name
+		// Use the GeonameLoader to fetch cities for the given country name if not in cache
 		List<Geoname> cities = GeonameLoader.getByName(countryName);
 
 		for (Geoname city : cities) {
 			population += city.getPopulation();
 		}
+
+
+		cache.put(countryName, population);
+		System.out.println("Befolkning for " + countryName + "lagt til chache");
 
 		return population;
 	}
