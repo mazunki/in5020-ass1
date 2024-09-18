@@ -5,9 +5,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 
 import com.ass1.*;
 import com.ass1.server.*;
@@ -45,6 +47,10 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 	}
 
+	public void completeTask(ServerInterface server, Identifier zoneId) throws RemoteException {
+		this.zones.getObjectById(zoneId).releaseServer(server);
+	}
+
 	public void unregister(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException {
 		System.out.println("[proxy] Server '" + serverId + "' wants to leave from " + zoneId);
 		Zone zone = this.zones.getObjectById(zoneId);
@@ -75,20 +81,29 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	}
 
 	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {
-		Iterator<Zone> neigbhours = this.zones.iterator(this.zones.getObjectById(zoneId),
-				this.maxNeighbourDistance);
+		Zone local_zone = this.zones.getObjectById(zoneId);
 
-		while (neigbhours.hasNext()) {
-			Zone zone = neigbhours.next();
-			if (zone.isChilling()) {
-				System.out.println("[proxy] Found available zone for " + zoneId + ": " + zone);
-				return zone.getServer();
-			} else {
-				System.out.println("[proxy] Skipping " + zone + " as it had performative anxiety");
+		if (local_zone.isAvailable()) {
+			System.out.println("[proxy] Found local zone for " + zoneId + ": " + local_zone);
+			return local_zone.getServer();
+		}
+
+		Iterator<Zone> zones = this.zones.iterator(local_zone, this.maxNeighbourDistance);
+
+		List<Zone> extern_zones = new ArrayList<Zone>(2);
+		while (zones.hasNext()) {
+			Zone neighbour = zones.next();
+			if (neighbour.isChilling()) {
+				extern_zones.add(neighbour);
 			}
 		}
 
-		return null;
+		if (extern_zones.size() == 0) {
+			return local_zone.getServer();
+		}
+
+		extern_zones.sort(Comparator.comparingInt(Zone::getRequestCount));
+		return extern_zones.getFirst().getServer();
 	}
 
 	public void start() {
@@ -100,6 +115,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 				System.out.println("Shutting down Proxy Server");
 				return;
 			}
+
 		}
 	}
 
