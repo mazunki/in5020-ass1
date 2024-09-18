@@ -14,6 +14,9 @@ CLIENT_JAR = $(BINDIR)/client.jar
 SERVER_JAR = $(BINDIR)/server.jar
 PROXY_JAR = $(BINDIR)/proxy.jar
 
+CLIENT_SIM_JAR = $(BINDIR)/client_sim.jar
+SERVER_SIM_JAR = $(BINDIR)/server_sim.jar
+
 $(CLASSPATH):
 	@mkdir -p $(CLASSPATH)
 
@@ -35,7 +38,16 @@ $(SERVER_JAR): classfiles | $(BINDIR)
 $(PROXY_JAR): classfiles | $(BINDIR)
 	jar cfe $(PROXY_JAR) com.ass1.loadbalancer.ProxyServer -C $(CLASSPATH) .
 
+
+$(CLIENT_SIM_JAR): classfiles testfiles | $(BINDIR)
+	jar cfe $(CLIENT_SIM_JAR) com.ass1.client.SimulateClient -C $(CLASSPATH) .
+
+$(SERVER_SIM_JAR): classfiles testfiles | $(BINDIR)
+	jar cfe $(SERVER_SIM_JAR) com.ass1.server.SimulateServer -C $(CLASSPATH) .
+
 jarfiles: $(CLIENT_JAR) $(SERVER_JAR) $(PROXY_JAR)
+
+simfiles: $(CLIENT_SIM_JAR) $(SERVER_SIM_JAR)
 
 classfiles: $(CLASS_FILES)
 
@@ -47,13 +59,14 @@ clean:
 purge: clean
 	rm -rf $(BINDIR)/*.jar
 
-all: jarfiles
+all: jarfiles simfiles
 
 # New target for running tests
 test: testfiles
 	@echo "Running tests..."
 	@java -cp $(CLASSPATH) com.ass1.data.TestDataLoader
 	@java -cp $(CLASSPATH) com.ass1.server.TestServer
+	@java -cp $(CLASSPATH) com.ass1.client.SimulateClient
 
 .PHONY: all purge clean test
 .DEFAULT_GOAL := classfiles
