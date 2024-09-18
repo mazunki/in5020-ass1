@@ -20,6 +20,8 @@ public interface ServerInterface extends Remote {
 
 	int getNumberOfCities(String[] args) throws RemoteException;
 
+	int getNumberOfCities(String countryName) throws RemoteException;
+
 	int getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
 
 	int getNumberOfCountries(String[] args) throws RemoteException;
