@@ -43,15 +43,15 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPopulationOfCountry(String[] args) throws RemoteException {
+		return this.getPopulationOfCountry(args[0]);
+	}
+
+	public int getPopulationOfCountry(String countryName) throws RemoteException {
 		try {
 			Thread.sleep(250); // real slow funciton fr fr no cap
 		} catch (InterruptedException e) {
 			System.err.println("uhh what");
 		}
-		return this.getPopulationOfCountry(args[0]);
-	}
-
-	public int getPopulationOfCountry(String countryName) throws RemoteException {
 		int population = 0;
 
 		// Use the GeonameLoader to fetch cities for the given country name
