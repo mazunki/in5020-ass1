@@ -87,22 +87,6 @@ public class Client {
 							throw new IllegalArgumentException(
 									"This function requires 1 argument.");
 					}
-				case "getnumberofcities":
-					switch (args.length) {
-						case 1:
-							this.prepareServer();
-							result = this.server.getNumberOfCities(args[0]);
-							break;
-						case 2:
-							this.prepareServer();
-							result = this.server.getNumberOfCities(args[0],
-									Integer.parseInt(args[1]));
-							break;
-						default:
-							throw new IllegalArgumentException(
-									"This function requires 2 arguments.");
-					}
-					break;
 
 				case "getnumberofcities":
 					switch (args.length) {

@@ -1,8 +1,5 @@
 package com.ass1.server;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -11,7 +8,6 @@ import com.ass1.data.GeonameLoader;
 import com.ass1.*;
 
 public class Server implements ServerInterface {
-
 	Identifier id;
 	ServerStub stub;
 
