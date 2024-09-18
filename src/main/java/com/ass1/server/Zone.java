@@ -12,7 +12,10 @@ public class Zone implements Identifiable, Comparable<Zone> {
 
 	HashMap<ServerInterface, Integer> servers = new HashMap<ServerInterface, Integer>();
 	Random random = new Random();
+
 	int maxRequests = 18;
+	int limitRemoteThreshold = 8;
+
 	int ongoingRequests = 0;
 	Identifier id;
 
@@ -33,7 +36,6 @@ public class Zone implements Identifiable, Comparable<Zone> {
 	}
 
 	public Server getObjectById(Identifier serverId) {
-
 		throw new RuntimeException("wtf was this?");
 	}
 
@@ -66,7 +68,16 @@ public class Zone implements Identifiable, Comparable<Zone> {
 		this.servers.put(s, this.servers.get(s) - 1);
 	}
 
+	public int getRequestCount() {
+		return this.ongoingRequests;
+	}
+
 	public boolean isChilling() {
+		/* is keen on accepting remote zone's work */
+		return this.ongoingRequests < this.limitRemoteThreshold;
+	}
+
+	public boolean isAvailable() {
 		/* aka not overloaded */
 		return this.ongoingRequests < this.maxRequests;
 	}

@@ -5,8 +5,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +29,7 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
 		this.zoneId = zone;
 		this.server = server;
-		this.executor = Executors.newFixedThreadPool(18);
+		this.executor = Executors.newFixedThreadPool(1);
 		this.registerToProxyServer();
 	}
 
@@ -70,30 +68,6 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 
 		System.out.println("[serverstub] Registered " + serverRegister + " on proxy server");
 	}
-
-	// public Object call(String method, Object[] args) {
-	// Method callable;
-
-	// try {
-	// callable = server.getClass().getMethod(method, String[].class);
-	// } catch (NoSuchMethodException e) {
-	// throw new IllegalArgumentException("No such method: '" + method + "'");
-	// }
-
-	// Object result;
-	// try {
-	// this.simulateExecutionDelay();
-	// result = callable.invoke(this.server, (Object) args);
-	// } catch (IllegalAccessException e) {
-	// throw new RuntimeException("You are not allowed to run this method! 😡");
-	// } catch (InvocationTargetException e) {
-	// throw new RuntimeException("Failed to invoke method...");
-	// }
-
-	// this.addNetworkDelay(); // response Server => client
-	// return result;
-
-	// }
 
 	public void addNetworkDelay() {
 		try {
@@ -156,6 +130,7 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 			});
 			System.out.println("[serverstub] Submitted task on " + this.getRegistryName());
 			T result = future.get();
+			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
 			System.out.println("[serverstub] Completed task on " + this.getRegistryName());
 			return result;
 		} catch (ExecutionException e) {
