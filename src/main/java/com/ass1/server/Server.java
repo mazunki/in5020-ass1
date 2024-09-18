@@ -12,8 +12,6 @@ import com.ass1.*;
 
 public class Server implements ServerInterface {
 
-
-
 	Identifier id;
 	ServerStub stub;
 
@@ -53,10 +51,10 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPopulationOfCountry(String countryName) throws RemoteException {
-
 		int population = 0;
 
-		// Use the GeonameLoader to fetch cities for the given country name if not in cache
+		// Use the GeonameLoader to fetch cities for the given country name if not in
+		// cache
 		List<Geoname> cities = GeonameLoader.getByName(countryName);
 
 		for (Geoname city : cities) {
