@@ -84,7 +84,7 @@ public class Client {
 							throw new IllegalArgumentException(
 									"This function requires 1 argument.");
 					}
-
+					break;
 				case "getnumberofcities":
 					switch (args.length) {
 						case 2:
@@ -97,7 +97,6 @@ public class Client {
 									"This function requires 2 arguments.");
 					}
 					break;
-
 				case "getnumberofcountries":
 
 					switch (args.length) {
@@ -119,11 +118,7 @@ public class Client {
 									"This function requires 2 or 3 arguments.");
 					}
 					break;
-
-				default:
-					throw new RuntimeException("No such function");
 			}
-
 		} catch (ClassCastException e) {
 			throw new RuntimeException("Invalid typecasting performed");
 		} catch (ArrayIndexOutOfBoundsException e) {
