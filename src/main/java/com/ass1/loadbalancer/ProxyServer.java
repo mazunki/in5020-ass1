@@ -14,6 +14,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.HashSet;
 
 import com.ass1.*;
 import com.ass1.server.*;
@@ -125,8 +126,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 
 		if (extern_zones.size() == 0) {
 			// no extern zones were helpful, let's just do it ourselves. sigh.
-			logger.fine(
-					"[proxy] Local zone was busy, but so was everyone else. Using " + local_zone);
+			logger.fine("Local zone was busy, but so was everyone else. Using " + local_zone);
 			return local_zone.getServer();
 		}
 
