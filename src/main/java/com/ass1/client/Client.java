@@ -107,29 +107,9 @@ public class Client {
 									"This function requires 2 arguments.");
 					}
 					break;
-<<<<<<< HEAD
-
-				case "getnumberofcities":
-					switch (args.length) {
-						case 2:
-							this.addNetworkDelay();
-							result = this.server.getNumberOfCities(args[0], Integer.parseInt(args[1]));
-							break;
-						default:
-							throw new IllegalArgumentException(
-									"This function requires 2 arguments.");
-					}
-					break;
-
 				case "getnumberofcountries":
 					switch (args.length) {
 						case 2:
-
-=======
-				case "getnumberofcountries":
-					switch (args.length) {
-						case 2:
->>>>>>> 661e659 (cache works on client side)
 							this.addNetworkDelay();
 							result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
 							break;
@@ -138,10 +118,6 @@ public class Client {
 							result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
 							break;
 						default:
-<<<<<<< HEAD
-=======
-
->>>>>>> 661e659 (cache works on client side)
 							throw new IllegalArgumentException("This function requires 2 or 3 arguments.");
 					}
 					break;
