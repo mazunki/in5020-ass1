@@ -6,7 +6,8 @@ import java.rmi.RemoteException;
 import com.ass1.Identifier;
 
 public interface ServerInterface extends Remote {
-	int EXECUTION_DELAY = 18; // ms
+	static int EXECUTION_DELAY = 18; // ms
+
 
 	boolean locatedAt(Identifier zoneId) throws RemoteException;
 

@@ -1,11 +1,14 @@
 package com.ass1.server;
 
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -27,12 +30,14 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 	ProxyServerInterface proxyServer;
 
 	private ExecutorService executor;
+	QueryResultCache cache;
 
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
 		this.zoneId = zone;
 		this.server = server;
 		this.executor = Executors.newFixedThreadPool(18);
 		this.registerToProxyServer();
+		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT);
 	}
 
 	@Override
@@ -182,6 +187,7 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 	}
 
 	public int getNumberOfCountries(String[] args) throws RemoteException {
+
 		return this.execute(() -> this.server.getNumberOfCountries(args));
 	}
 
