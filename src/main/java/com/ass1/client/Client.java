@@ -23,14 +23,7 @@ public class Client {
 	Registry proxyRegistry;
 	ProxyServerInterface proxyServer;
 	ServerInterface server;
-
-	private Map<String, Object> cacheBaby = new LinkedHashMap<String, Object>(CacheStr, 0.75f, true) {
-		@Override
-		// generert ved hjelp av intellij
-		protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
-			return size() > CacheStr;
-		}
-	};
+	QueryResultCache cache;
 
 	public Client(String zoneId) {
 		this.zoneId = new Identifier(zoneId);
@@ -59,6 +52,8 @@ public class Client {
 		} catch (RemoteException e) {
 			throw new RuntimeException("Failed to request a zone on proxy server! 😷");
 		}
+
+		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_CLIENT_CACHE_LIMIT);
 	}
 
 	private void prepareServer() {
@@ -73,16 +68,9 @@ public class Client {
 		}
 	}
 
-	private String cacheKeyGenerator(String metode, String[] args) {
-		return metode + ":" + String.join(";", args);
-	}
-
 	public Object makeQuery(String method, String[] args) {
-		String cacheKey = cacheKeyGenerator(method, args);
-
-		if (cacheBaby.containsKey(cacheKey)) {
-			System.out.println("Cache eksisterer i " + cacheKey);
-			return cacheBaby.get(cacheKey);
+		if (this.cache.has(method, args)) {
+			return this.cache.get(method, args);
 		}
 
 		Object result = null;
@@ -141,9 +129,6 @@ public class Client {
 					throw new RuntimeException("No such function");
 			}
 
-			cacheBaby.put(cacheKey, result);
-			System.out.println("Cache miss for " + cacheKey + ". Caching result.");
-
 		} catch (ClassCastException e) {
 			throw new RuntimeException("Invalid typecasting performed");
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -152,7 +137,7 @@ public class Client {
 			throw new RuntimeException("Failed to call server");
 		}
 
-		return result;
+		return this.cache.remember(method, args, result);
 	}
 
 	public static void main(String[] args) {

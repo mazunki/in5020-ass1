@@ -1,9 +1,14 @@
 package com.ass1.server;
 
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +39,7 @@ public class ServerStub implements ServerInterface {
 	private ExecutorService executor;
 	int counter = 0;
 	private static int REPORT_INTERVAL = 18;
+	QueryResultCache cache;
 
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
 		if (fileHandler == null) {
@@ -56,7 +62,7 @@ public class ServerStub implements ServerInterface {
 		this.server = server;
 		this.executor = Executors.newFixedThreadPool(1);
 		this.registerToProxyServer();
-
+		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT);
 	}
 
 	private void registerToProxyServer() throws RemoteException {
@@ -176,6 +182,7 @@ public class ServerStub implements ServerInterface {
 	}
 
 	public int getNumberOfCountries(String[] args) throws RemoteException {
+
 		return this.execute(() -> this.server.getNumberOfCountries(args));
 	}
 
