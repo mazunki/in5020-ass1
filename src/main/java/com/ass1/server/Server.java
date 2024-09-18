@@ -47,11 +47,6 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPopulationOfCountry(String countryName) throws RemoteException {
-		try {
-			Thread.sleep(250); // real slow funciton fr fr no cap
-		} catch (InterruptedException e) {
-			System.err.println("uhh what");
-		}
 		int population = 0;
 
 		// Use the GeonameLoader to fetch cities for the given country name
@@ -68,10 +63,10 @@ public class Server implements ServerInterface {
 		return this.getNumberOfCities(args[0], Integer.parseInt(args[1]));
 	}
 
-	public int getNumberOfCities(String countryName) throws RemoteException {
-		// NOTE: this is not from spec, but simulation requires it
-		return GeonameLoader.getByName(countryName).size();
-	}
+	// public int getNumberOfCities(String countryName) throws RemoteException {
+	// // NOTE: this is not from spec, but simulation requires it
+	// return GeonameLoader.getByName(countryName).size();
+	// }
 
 	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
 		int cityCount = 0;

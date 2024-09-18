@@ -3,7 +3,6 @@ package com.ass1.server;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -11,15 +10,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.rmi.NotBoundException;
 
 import com.ass1.loadbalancer.*;
 import com.ass1.*;
 
-public class ServerStub extends RMISocketFactory implements ServerInterface {
+public class ServerStub implements ServerInterface {
+	private static final Logger logger = Logger.getLogger(ServerStub.class.getName());
+	private static final Level logLevel = Level.INFO;
+	private static final OnelineFormatter fmt = new OnelineFormatter("stub");
+	private static final ConsoleHandler consHandler = new ConsoleHandler();
+	private static FileHandler fileHandler;
+
 	Server server;
 	Identifier zoneId;
 	ProxyServerInterface proxyServer;
@@ -27,32 +34,33 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 	private ExecutorService executor;
 
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
+		if (fileHandler == null) {
+			try {
+				fileHandler = new FileHandler("log/server.log", true);
+				fileHandler.setFormatter(fmt);
+				logger.addHandler(fileHandler);
+
+				consHandler.setFormatter(fmt);
+				logger.addHandler(consHandler);
+				logger.setUseParentHandlers(false);
+
+				logger.setLevel(ServerStub.logLevel);
+			} catch (IOException e) {
+				System.err.println("Failed to initialize logger: " + e.getMessage());
+			}
+		}
+
 		this.zoneId = zone;
 		this.server = server;
 		this.executor = Executors.newFixedThreadPool(1);
 		this.registerToProxyServer();
-	}
 
-	@Override
-	public Socket createSocket(String host, int port) throws IOException {
-		System.out.println("[serverstub] Got connection");
-		try {
-			Thread.sleep(80);
-		} catch (InterruptedException e) {
-			throw new RuntimeException("[serverstub] Couldn't sleep during socket creation");
-		}
-		return new Socket(host, port);
-	}
-
-	@Override
-	public ServerSocket createServerSocket(int port) throws IOException {
-		return new ServerSocket(port);
 	}
 
 	private void registerToProxyServer() throws RemoteException {
 		String serverRegister = this.getRegistryName();
 
-		System.out.println("[serverstub] Connecting to ProxyServer from " + serverRegister);
+		logger.info("Connecting to ProxyServer from " + serverRegister);
 
 		Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1099);
 
@@ -66,7 +74,7 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 
 		proxyServer.register(srv, this.zoneId, this.server.getId());
 
-		System.out.println("[serverstub] Registered " + serverRegister + " on proxy server");
+		logger.info("Registered " + serverRegister + " on proxy server");
 	}
 
 	public void addNetworkDelay() {
@@ -94,10 +102,10 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
-					System.out.println("[serverstub] Shutting down " + server);
+					logger.info("Shutting down " + server);
 					proxyServer.unregister(self, zoneId, server.getId());
 				} catch (RemoteException e) {
-					System.err.println("[serverstub] Failed to unregister " + getRegistryName());
+					logger.warning("Failed to unregister " + getRegistryName());
 				}
 			}
 		});
@@ -116,22 +124,22 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 
 	public void reportStatus() {
 		ThreadPoolExecutor ex = (ThreadPoolExecutor) this.executor;
-		System.out.println("[serverstub] Execution queue contains " + ex.getPoolSize()
+		logger.info("Execution queue contains " + ex.getPoolSize()
 				+ " tasks for " + this.getRegistryName());
 	}
 
 	private <T> T execute(Callable<T> task) throws RemoteException {
-		System.out.println("[serverstub] Received task on " + this.getRegistryName());
+		logger.finer("Received task on " + this.getRegistryName());
 		this.reportStatus();
 		try {
 			Future<T> future = this.executor.submit(() -> {
 				this.simulateExecutionDelay();
 				return task.call();
 			});
-			System.out.println("[serverstub] Submitted task on " + this.getRegistryName());
+			logger.finer("Submitted task on " + this.getRegistryName());
 			T result = future.get();
 			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
-			System.out.println("[serverstub] Completed task on " + this.getRegistryName());
+			logger.info("Completed task on " + this.getRegistryName());
 			return result;
 		} catch (ExecutionException e) {
 			throw new RemoteException("[serverstub] Task execution failed");
@@ -150,10 +158,6 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 
 	public int getNumberOfCities(String[] args) throws RemoteException {
 		return this.execute(() -> this.server.getNumberOfCities(args));
-	}
-
-	public int getNumberOfCities(String countryName) throws RemoteException {
-		return this.execute(() -> this.server.getNumberOfCities(countryName));
 	}
 
 	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {

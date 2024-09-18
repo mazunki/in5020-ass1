@@ -3,60 +3,146 @@ package com.ass1.client;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.ass1.OnelineFormatter;
 
 public class SimulateClient {
+	private static final Logger logger = Logger.getLogger(SimulateClient.class.getName());
+	private static final Level logLevel = Level.FINER;
 
-    public static void main(String[] args) {
-        String inputFile = "src/main/resources/exercise_1_input.txt";
+	private static Integer MAX_QUERIES = null;
+	private static int DELAY_QUERIES = 20; // ms
 
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
-            String line;
-            int lineno = 0;
-            while ((line = br.readLine()) != null) {
-                lineno++;
-                System.out.println("Processing line " + lineno + ": " + line);
-                line = line.replaceAll("\\s+", " "); // Normalize spaces
-                String zone = line.split("Zone:")[1].trim();
+	public static void main(String[] args) throws InterruptedException {
 
-                // Extract method and rest of the line (arguments)
-                String[] parts = line.split(" ", 2);
-                String method = parts[0].trim(); // Method name
-                String rest = parts[1].replace("Zone:" + zone, "").trim(); // Arguments part, remove zone
+		try {
+			OnelineFormatter fmt = new OnelineFormatter("clientsim");
+			FileHandler fileHandler = new FileHandler("log/client.log", true);
+			fileHandler.setFormatter(fmt);
+			logger.addHandler(fileHandler);
 
-                // Split the remaining part (method args) by space
-                String[] tokens = rest.split(" ");
+			ConsoleHandler consHandler = new ConsoleHandler();
+			consHandler.setFormatter(fmt);
+			logger.addHandler(consHandler);
 
-                // Determine where the country name ends (first number starts method args)
-                StringBuilder countryName = new StringBuilder();
-                int i = 0;
-                while (i < tokens.length && !tokens[i].matches("\\d+")) {
-                    countryName.append(tokens[i]).append(" ");
-                    i++;
-                }
+			logger.setUseParentHandlers(false);
+			logger.setLevel(SimulateClient.logLevel);
+		} catch (IOException e) {
+			System.err.println("Failed to initialize logger: " + e.getMessage());
+		}
+		logger.info("Starting SimulateClient");
 
-                // Trim the country name and capture remaining as arguments
-                String country = countryName.toString().trim();
-                String[] methodArgs = new String[tokens.length - i];
-                System.arraycopy(tokens, i, methodArgs, 0, methodArgs.length);
+		String inputFile = "src/main/resources/exercise_1_input.txt";
 
-                LinkedList<String> clientArgs = new LinkedList<String>(); // method + country + zone
-                clientArgs.add(method);
+		Pattern pattern = Pattern.compile("(\\w+)\\s+(.*?)\\s*Zone:(\\d+)"); // <method> [<args...> ]Zone:<zone>
+		Pattern argsPattern = Pattern.compile("(\\d+|[\\w&&[^\\d]]+(?:\s+[\\w&&[^\\d]]+)*)"); // <<number>|<multiword>...>
+		Matcher matcher, argsMatcher;
 
-                if (!country.isEmpty()) {
-                    clientArgs.add(country);
-                }
+		List<ClientTask> tasks = new ArrayList<>();
 
-                clientArgs.addAll(Arrays.asList(methodArgs));
-                clientArgs.add(zone);
+		try (BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
+			int lineno = 0;
+			String line;
+			while ((line = br.readLine()) != null) {
+				lineno++;
+				matcher = pattern.matcher(line);
 
-                // Log and invoke Client.main()
-                System.out.print("Invoking Client.main() with arguments: " + String.join(", ", clientArgs) + "... ");
-                Client.main(clientArgs.toArray(new String[0]));
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading input file: " + e.getMessage());
-        }
-    }
+				if (!matcher.matches()) {
+					logger.warning("Invalid query on line: " + lineno + ": " + line);
+					continue;
+				}
+
+				String method = matcher.group(1);
+				ArrayList<String> arguments = new ArrayList<String>();
+				argsMatcher = argsPattern.matcher(matcher.group(2));
+				while (argsMatcher.find()) {
+					arguments.add(argsMatcher.group().trim());
+				}
+
+				String zoneId = matcher.group(3);
+
+				ClientTask task = new ClientTask(zoneId, method, arguments.toArray(new String[0]),
+						lineno);
+				tasks.add(task);
+
+				if (MAX_QUERIES != null && tasks.size() >= MAX_QUERIES) {
+					break;
+				}
+			}
+		} catch (IOException e) {
+			logger.log(Level.SEVERE, "Error reading input file: " + e.getMessage());
+		}
+		logger.info("Parsed a total of " + tasks.size() + " tasks");
+
+		int nproc = Runtime.getRuntime().availableProcessors();
+		ExecutorService executor = Executors.newFixedThreadPool(nproc - 1);
+		logger.config("Using " + (nproc - 1) + " processors");
+
+		logger.info("Submitting tasks");
+
+		// for (ClientTask task : tasks.subList(792, 850)) {
+		for (ClientTask task : tasks) {
+			executor.submit(task);
+			Thread.sleep(DELAY_QUERIES);
+		}
+
+		logger.info("All tasks submitted, awaiting termination");
+
+		// executor.shutdown(); // stop accepting tasks
+		while (!executor.awaitTermination(50, TimeUnit.MILLISECONDS)) {
+			// spin until the already-accepted tasks are done.
+		}
+
+		logger.info("Ending simulation");
+	}
+
+	static class ClientTask implements Runnable {
+		private Client client;
+		private final String zoneId;
+		private final String method;
+		private final String[] arguments;
+		private final int lineno;
+		private static int counter = 0;
+
+		public ClientTask(String zoneId, String method, String[] arguments, int lineno) {
+			this.zoneId = zoneId;
+			this.method = method;
+			this.arguments = arguments;
+			this.lineno = lineno;
+		}
+
+		@Override
+		public void run() {
+			try {
+				this.client = new Client(this.zoneId);
+				Object result = client.makeQuery(method, arguments);
+				logger.finer(this + "... " + result);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());
+			}
+
+			counter++;
+			if (counter % 300 == 0) {
+				logger.info("Completed " + counter + " tasks.");
+			}
+		}
+
+		public String toString() {
+			return "#" + this.lineno + ":" + this.method + ":{" + String.join(";", this.arguments)
+					+ "}@zone-" + zoneId;
+
+		}
+
+	}
 }

@@ -2,6 +2,7 @@ SOURCES = src/main/java
 TEST_SOURCES = src/test/java
 CLASSPATH = target
 BINDIR = bin
+LOGDIR = log
 
 JAVA_TARGET = 21
 
@@ -16,6 +17,9 @@ PROXY_JAR = $(BINDIR)/proxy.jar
 
 CLIENT_SIM_JAR = $(BINDIR)/client_sim.jar
 SERVER_SIM_JAR = $(BINDIR)/server_sim.jar
+
+$(LOGDIR):
+	@mkdir -p $(LOGDIR)
 
 $(CLASSPATH):
 	@mkdir -p $(CLASSPATH)
@@ -61,12 +65,19 @@ purge: clean
 
 all: jarfiles simfiles
 
-# New target for running tests
 test: testfiles
 	@echo "Running tests..."
 	@java -cp $(CLASSPATH) com.ass1.data.TestDataLoader
 	@java -cp $(CLASSPATH) com.ass1.server.TestServer
-	@java -cp $(CLASSPATH) com.ass1.client.SimulateClient
 
-.PHONY: all purge clean test
+
+sim_client: $(CLIENT_SIM_JAR) | $(LOGDIR)
+	java -jar $(CLIENT_SIM_JAR)
+
+sim_server: $(SERVER_SIM_JAR) | $(LOGDIR)
+	java -jar $(SERVER_SIM_JAR)
+
+
+.PHONY: all purge clean test sim_client sim_server
 .DEFAULT_GOAL := classfiles
+
