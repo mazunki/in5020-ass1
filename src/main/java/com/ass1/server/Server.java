@@ -64,10 +64,6 @@ public class Server implements ServerInterface {
 			population += city.getPopulation();
 		}
 
-
-		cache.put(countryName, population);
-		System.out.println("Befolkning for " + countryName + "lagt til chache");
-
 		return population;
 	}
 
