@@ -18,6 +18,10 @@ public class QueryResultCache {
         this.cache = new LinkedHashMap<String, Object>(this.size, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
+                boolean should_del = size() > self.size;
+                if (should_del) {
+                    System.out.println("brr from cache");
+                }
                 return size() > self.size;
             }
         };
