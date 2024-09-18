@@ -1,8 +1,5 @@
 package com.ass1.client;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
