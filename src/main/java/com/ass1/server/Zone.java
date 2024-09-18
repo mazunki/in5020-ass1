@@ -64,6 +64,7 @@ public class Zone implements Identifiable, Comparable<Zone> {
 	}
 
 	public void releaseServer(ServerInterface s) {
+		System.out.println("[zone] Released a request slot on " + this);
 		this.ongoingRequests--;
 		this.servers.put(s, this.servers.get(s) - 1);
 	}
