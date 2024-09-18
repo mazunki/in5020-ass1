@@ -6,7 +6,7 @@ public class TestServer {
     public static void main(String[] args) {
         try {
             // Create the server instance
-            Server server = new Server("test");
+            Server server = new Server("test", "test");
 
             // Test 1: getPopulationofCountry
             System.out.println("Test 1: getPopulationOfCountry");
