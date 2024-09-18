@@ -82,32 +82,57 @@ public class Client {
 		try {
 			switch (method.toLowerCase()) {
 				case "getpopulationofcountry":
-					if (args.length == 1) {
-						this.addNetworkDelay();
-						result = this.server.getPopulationOfCountry(args[0]);
-					} else {
-						throw new IllegalArgumentException("This function requires 1 argument.");
+					switch (args.length) {
+						case 1:
+							this.addNetworkDelay();
+							result = this.server.getPopulationOfCountry(args[0]);
+							break;
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 1 argument.");
+					}
+				case "getnumberofcities":
+					switch (args.length) {
+						case 1:
+							this.addNetworkDelay();
+							result = this.server.getNumberOfCities(args[0]);
+							break;
+						case 2:
+							this.addNetworkDelay();
+							result = this.server.getNumberOfCities(args[0],
+									Integer.parseInt(args[1]));
+							break;
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 2 arguments.");
 					}
 					break;
 
 				case "getnumberofcities":
-					if (args.length == 2) {
-						this.addNetworkDelay();
-						result = this.server.getNumberOfCities(args[0], Integer.parseInt(args[1]));
-					} else {
-						throw new IllegalArgumentException("This function requires 2 arguments.");
+					switch (args.length) {
+						case 2:
+							this.addNetworkDelay();
+							result = this.server.getNumberOfCities(args[0], Integer.parseInt(args[1]));
+							break;
+						default:
+							throw new IllegalArgumentException(
+									"This function requires 2 arguments.");
 					}
 					break;
 
 				case "getnumberofcountries":
-					if (args.length == 2) {
-						this.addNetworkDelay();
-						result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-					} else if (args.length == 3) {
-						this.addNetworkDelay();
-						result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
-					} else {
-						throw new IllegalArgumentException("This function requires 2 or 3 arguments.");
+					switch (args.length) {
+						case 2:
+
+							this.addNetworkDelay();
+							result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+							break;
+						case 3:
+							this.addNetworkDelay();
+							result = this.server.getNumberOfCountries(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+							break;
+						default:
+							throw new IllegalArgumentException("This function requires 2 or 3 arguments.");
 					}
 					break;
 

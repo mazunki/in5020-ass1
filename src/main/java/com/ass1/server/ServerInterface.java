@@ -8,7 +8,6 @@ import com.ass1.Identifier;
 public interface ServerInterface extends Remote {
 	static int EXECUTION_DELAY = 18; // ms
 
-
 	boolean locatedAt(Identifier zoneId) throws RemoteException;
 
 	int getPopulationOfCountry(String[] args) throws RemoteException;
@@ -16,6 +15,8 @@ public interface ServerInterface extends Remote {
 	int getPopulationOfCountry(String countryName) throws RemoteException;
 
 	int getNumberOfCities(String[] args) throws RemoteException;
+
+	int getNumberOfCities(String countryName) throws RemoteException;
 
 	int getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
 
