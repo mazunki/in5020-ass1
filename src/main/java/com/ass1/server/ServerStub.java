@@ -159,6 +159,10 @@ public class ServerStub extends RMISocketFactory implements ServerInterface {
 		return this.execute(() -> this.server.getNumberOfCities(args));
 	}
 
+	public int getNumberOfCities(String countryName) throws RemoteException {
+		return this.execute(() -> this.server.getNumberOfCities(countryName));
+	}
+
 	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
 		return this.execute(() -> this.server.getNumberOfCities(countryName, minPopulation));
 	}
