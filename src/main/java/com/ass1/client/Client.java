@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
-
 import com.ass1.server.*;
 import com.ass1.*;
 import com.ass1.loadbalancer.ProxyServerInterface;
@@ -14,7 +13,7 @@ import com.ass1.loadbalancer.ProxyServerInterface;
 public class Client {
 	final static String PROXY_SERVER = "127.0.0.1";
 	final static int PROXY_PORT = 1099;
-	final static int CacheStr = 45;
+	final static int CacheStr = 45; // Client cache limit
 	Identifier zoneId;
 
 	Registry proxyRegistry;
@@ -24,6 +23,13 @@ public class Client {
 
 	public Client(String zoneId) {
 		this.zoneId = new Identifier(zoneId);
+
+		// Check if cache should be enabled from command-line args
+		boolean cacheEnabled = true; // TODO: Implement logic to check command-line args
+
+		// Initialize cache based on whether caching is enabled
+		this.cache = cacheEnabled ? new QueryResultCache(QueryResultCache.DEFAULT_CLIENT_CACHE_LIMIT)
+				: new QueryResultCache(0);
 
 		try {
 			this.proxyRegistry = LocateRegistry.getRegistry(PROXY_SERVER, PROXY_PORT);
@@ -49,8 +55,6 @@ public class Client {
 		} catch (RemoteException e) {
 			throw new RuntimeException("Failed to request a zone on proxy server! 😷");
 		}
-
-		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_CLIENT_CACHE_LIMIT);
 	}
 
 	private void prepareServer() {
@@ -67,7 +71,7 @@ public class Client {
 
 	public Object makeQuery(String method, String[] args) {
 		if (this.cache.has(method, args)) {
-			return this.cache.get(method, args);
+			return this.cache.get(method, args); // Return cached result
 		}
 
 		Object result = null;
@@ -127,6 +131,7 @@ public class Client {
 			throw new RuntimeException("Failed to call server");
 		}
 
+		// Store the result in cache after fetching it
 		return this.cache.remember(method, args, result);
 	}
 
