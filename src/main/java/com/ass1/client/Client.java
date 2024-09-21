@@ -33,7 +33,7 @@ public class Client {
 			this.proxyServer = (ProxyServerInterface) this.proxyRegistry
 					.lookup(ProxyServerInterface.PROXY_IDENTIFIER);
 		} catch (RemoteException e) {
-			throw new RuntimeException("Failed to connect with proxy server! 😷");
+			throw new RuntimeException("Failed to connect with proxy server! 😷" + e.getMessage());
 		} catch (NotBoundException e) {
 			throw new RuntimeException("Failed to find proxy server reference...");
 		}
@@ -49,8 +49,9 @@ public class Client {
 		}
 	}
 
-	private void addNetworkDelay() {
+	private void prepareServer() {
 		try {
+			this.server.enter();
 			int ms = (this.server.locatedAt(this.zoneId)) ? Zone.LOCAL_DELAY : Zone.EXTERN_DELAY;
 			Thread.sleep(ms);
 		} catch (RemoteException e) {
@@ -67,7 +68,7 @@ public class Client {
 				case "getpopulationofcountry":
 					switch (args.length) {
 						case 1:
-							this.addNetworkDelay();
+							this.prepareServer();
 							return this.server.getPopulationOfCountry(args[0]);
 						default:
 							throw new IllegalArgumentException(
@@ -76,7 +77,7 @@ public class Client {
 				case "getnumberofcities":
 					switch (args.length) {
 						case 2:
-							this.addNetworkDelay();
+							this.prepareServer();
 							return this.server.getNumberOfCities(args[0],
 									Integer.parseInt(args[1]));
 						default:
@@ -87,12 +88,12 @@ public class Client {
 				case "getnumberofcountries": {
 					switch (args.length) {
 						case 2:
-							this.addNetworkDelay();
+							this.prepareServer();
 							return this.server.getNumberOfCountries(
 									Integer.parseInt(args[0]),
 									Integer.parseInt(args[1]));
 						case 3:
-							this.addNetworkDelay();
+							this.prepareServer();
 							return this.server.getNumberOfCountries(
 									Integer.parseInt(args[0]),
 									Integer.parseInt(args[1]),

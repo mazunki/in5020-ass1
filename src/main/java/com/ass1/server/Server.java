@@ -63,10 +63,13 @@ public class Server implements ServerInterface {
 		return this.getNumberOfCities(args[0], Integer.parseInt(args[1]));
 	}
 
-	// public int getNumberOfCities(String countryName) throws RemoteException {
-	// // NOTE: this is not from spec, but simulation requires it
-	// return GeonameLoader.getByName(countryName).size();
-	// }
+	public void enter() {
+		this.stub.enter();
+	}
+
+	public void leave() {
+		this.stub.leave();
+	}
 
 	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
 		int cityCount = 0;

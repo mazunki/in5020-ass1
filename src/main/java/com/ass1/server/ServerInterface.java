@@ -10,6 +10,10 @@ public interface ServerInterface extends Remote {
 
 	boolean locatedAt(Identifier zoneId) throws RemoteException;
 
+	void enter() throws RemoteException;
+
+	void leave() throws RemoteException;
+
 	int getPopulationOfCountry(String[] args) throws RemoteException;
 
 	int getPopulationOfCountry(String countryName) throws RemoteException;

@@ -73,6 +73,13 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 	}
 
+	public void startupTask(ServerInterface server, Identifier zoneId) throws RemoteException {
+		Zone zone = this.zones.getObjectById(zoneId);
+		String pre = zone.toString();
+		zone.grabServer(server);
+		logger.fine("Starting task from " + pre + " => " + zone);
+	}
+
 	public void completeTask(ServerInterface server, Identifier zoneId) throws RemoteException {
 		Zone zone = this.zones.getObjectById(zoneId);
 		String pre = zone.toString();
@@ -96,17 +103,6 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 
 		zone.register(server);
 		logger.info("Registered new server '" + serverId + "' on " + zone);
-	}
-
-	public void releaseServer(ServerInterface server) throws RemoteException {
-		Iterator<Zone> neigbhours = this.zones.iterator();
-		while (neigbhours.hasNext()) {
-			Zone z = neigbhours.next();
-			if (server.locatedAt(z.getId())) {
-				z.releaseServer(server);
-				return;
-			}
-		}
 	}
 
 	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {

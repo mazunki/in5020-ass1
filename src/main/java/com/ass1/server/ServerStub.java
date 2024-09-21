@@ -32,6 +32,8 @@ public class ServerStub implements ServerInterface {
 	ProxyServerInterface proxyServer;
 
 	private ExecutorService executor;
+	int counter = 0;
+	private static int REPORT_INTERVAL = 18;
 
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
 		if (fileHandler == null) {
@@ -93,6 +95,15 @@ public class ServerStub implements ServerInterface {
 		return this.executor.toString();
 	}
 
+	public void enter() {
+		if (++this.counter % ServerStub.REPORT_INTERVAL == 0) {
+			this.reportStatus();
+		}
+	}
+
+	public void leave() {
+	}
+
 	public boolean isAlive() {
 		return true;
 	}
@@ -124,22 +135,22 @@ public class ServerStub implements ServerInterface {
 
 	public void reportStatus() {
 		ThreadPoolExecutor ex = (ThreadPoolExecutor) this.executor;
-		logger.info("Execution queue contains " + ex.getPoolSize()
+		logger.info("Execution queue contains " + ex.getQueue().size()
 				+ " tasks for " + this.getRegistryName());
 	}
 
 	private <T> T execute(Callable<T> task) throws RemoteException {
 		logger.finer("Received task on " + this.getRegistryName());
-		this.reportStatus();
 		try {
 			Future<T> future = this.executor.submit(() -> {
 				this.simulateExecutionDelay();
 				return task.call();
 			});
 			logger.finer("Submitted task on " + this.getRegistryName());
+			this.proxyServer.startupTask((ServerInterface) this, this.zoneId);
 			T result = future.get();
 			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
-			logger.info("Completed task on " + this.getRegistryName());
+			logger.fine("Completed task on " + this.getRegistryName());
 			return result;
 		} catch (ExecutionException e) {
 			throw new RemoteException("[serverstub] Task execution failed");
