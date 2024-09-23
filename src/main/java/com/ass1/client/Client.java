@@ -5,7 +5,12 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.ass1.server.*;
 import com.ass1.*;
 import com.ass1.loadbalancer.ProxyServerInterface;
@@ -16,20 +21,24 @@ public class Client {
 	final static int CacheStr = 45; // Client cache limit
 	Identifier zoneId;
 
-	Registry proxyRegistry;
-	ProxyServerInterface proxyServer;
-	ServerInterface server;
-	QueryResultCache cache;
+	private Registry proxyRegistry;
+	private ProxyServerInterface proxyServer;
+	private ServerInterface server;
+	private QueryResultCache cache;
+
+	private static final Logger logger = LoggerUtil.createLogger(ServerStub.class.getName(), "client", "client");
 
 	public Client(String zoneId) {
+		this(zoneId, true);
+	}
+
+	public Client(String zoneId, boolean enableCache) {
 		this.zoneId = new Identifier(zoneId);
 
-		// Check if cache should be enabled from command-line args
-		boolean cacheEnabled = true; // TODO: Implement logic to check command-line args
-
-		// Initialize cache based on whether caching is enabled
-		this.cache = cacheEnabled ? new QueryResultCache(QueryResultCache.DEFAULT_CLIENT_CACHE_LIMIT)
-				: new QueryResultCache(0);
+		if (enableCache) {
+			Logger cacheLogger = LoggerUtil.deriveLogger(Client.logger, "cache", Level.INFO);
+			this.cache = new QueryResultCache(QueryResultCache.DEFAULT_CLIENT_CACHE_LIMIT, cacheLogger);
+		}
 
 		try {
 			this.proxyRegistry = LocateRegistry.getRegistry(PROXY_SERVER, PROXY_PORT);
@@ -70,7 +79,7 @@ public class Client {
 	}
 
 	public Object makeQuery(String method, String[] args) {
-		if (this.cache.has(method, args)) {
+		if (this.cache != null && this.cache.has(method, args)) {
 			return this.cache.get(method, args); // Return cached result
 		}
 
@@ -131,25 +140,32 @@ public class Client {
 			throw new RuntimeException("Failed to call server");
 		}
 
-		// Store the result in cache after fetching it
+		if (this.cache == null) {
+			return result;
+		}
 		return this.cache.remember(method, args, result);
 	}
 
 	public static void main(String[] args) {
 		/*
 		 * clients are invoked with the following argument pattern
-		 * <method> [<arg1> <arg2> <arg3> ...] <zone>
+		 * <method> [options] [<arg1> <arg2> <arg3> ...] <zone>
 		 */
-		if (args.length < 2) {
+		List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+
+		boolean use_cache = arguments.remove("--cache");
+
+		if (arguments.size() < 2) {
 			throw new IllegalArgumentException(
 					"At minimum, specify which method to run, and which zone to connect to");
 		}
-		String zoneId = args[args.length - 1].replaceFirst("Zone:", "");
-		String method = args[0];
-		String[] query_args = Arrays.copyOfRange(args, 1, args.length - 1);
 
-		Client client = new Client(zoneId);
-		Object response = client.makeQuery(method, query_args);
+		String method = arguments.get(0);
+		String zoneId = arguments.get(arguments.size() - 1).replaceFirst("Zone:", "");
+		List<String> query_args = arguments.subList(1, arguments.size() - 1);
+
+		Client client = new Client(zoneId, use_cache);
+		Object response = client.makeQuery(method, query_args.toArray(new String[0]));
 		System.out.println(response);
 	}
 }

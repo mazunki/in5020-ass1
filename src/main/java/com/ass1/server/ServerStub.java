@@ -1,36 +1,23 @@
 package com.ass1.server;
 
-import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.IOException;
 import java.rmi.NotBoundException;
 
 import com.ass1.loadbalancer.*;
 import com.ass1.*;
 
 public class ServerStub implements ServerInterface {
-	private static final Logger logger = Logger.getLogger(ServerStub.class.getName());
-	private static final Level logLevel = Level.INFO;
-	private static final OnelineFormatter fmt = new OnelineFormatter("stub");
-	private static final ConsoleHandler consHandler = new ConsoleHandler();
-	private static FileHandler fileHandler;
+	private final Logger logger;
 
 	Server server;
 	Identifier zoneId;
@@ -42,27 +29,13 @@ public class ServerStub implements ServerInterface {
 	QueryResultCache cache;
 
 	public ServerStub(Server server, Identifier zone) throws RemoteException {
-		if (fileHandler == null) {
-			try {
-				fileHandler = new FileHandler("log/server.log", true);
-				fileHandler.setFormatter(fmt);
-				logger.addHandler(fileHandler);
-
-				consHandler.setFormatter(fmt);
-				logger.addHandler(consHandler);
-				logger.setUseParentHandlers(false);
-
-				logger.setLevel(ServerStub.logLevel);
-			} catch (IOException e) {
-				System.err.println("Failed to initialize logger: " + e.getMessage());
-			}
-		}
-
 		this.zoneId = zone;
 		this.server = server;
+		this.logger = LoggerUtil.createLogger("server-" + this.getRegistryName(), "server", "stub");
 		this.executor = Executors.newFixedThreadPool(1);
+		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT,
+				server.getId().toString());
 		this.registerToProxyServer();
-		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT);
 	}
 
 	private void registerToProxyServer() throws RemoteException {
@@ -145,8 +118,20 @@ public class ServerStub implements ServerInterface {
 				+ " tasks for " + this.getRegistryName());
 	}
 
-	private <T> T execute(Callable<T> task) throws RemoteException {
+	private <T> T execute(Callable<T> task, Object[] cache_args, Class<T> return_type) throws RemoteException {
 		logger.finer("Received task on " + this.getRegistryName());
+
+		/*
+		 * sorta cursed, but should work. avoids redundancy, and
+		 * accidental typos. sorta wish i could fetch the arguments
+		 * like this to, to avoid rebuilding `Object[] cache_args`
+		 * during wrapping
+		 */
+		String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
+		if (cache.has(methodName, cache_args)) {
+			return return_type.cast(cache.get(methodName, cache_args));
+		}
+
 		try {
 			Future<T> future = this.executor.submit(() -> {
 				this.simulateExecutionDelay();
@@ -157,41 +142,54 @@ public class ServerStub implements ServerInterface {
 			T result = future.get();
 			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
 			logger.fine("Completed task on " + this.getRegistryName());
+			cache.remember(methodName, cache_args, result);
 			return result;
+
 		} catch (ExecutionException e) {
-			throw new RemoteException("[serverstub] Task execution failed");
+			throw new RemoteException("Task execution failed");
 		} catch (InterruptedException e) {
-			throw new RemoteException("[serverstub] Task execution was cancelled");
+			throw new RemoteException("Task execution was cancelled");
 		}
 	}
 
-	public int getPopulationOfCountry(String[] args) throws RemoteException {
-		return this.execute(() -> this.server.getPopulationOfCountry(args));
+	public Integer getPopulationOfCountry(String[] args) throws RemoteException {
+		Object[] cacheArgs = (Object[]) args;
+		return this.execute(() -> this.server.getPopulationOfCountry(args), cacheArgs, Integer.class);
 	}
 
-	public int getPopulationOfCountry(String countryName) throws RemoteException {
-		return this.execute(() -> this.server.getPopulationOfCountry(countryName));
+	public Integer getPopulationOfCountry(String countryName) throws RemoteException {
+		Object[] cacheArgs = { countryName };
+		return this.execute(() -> this.server.getPopulationOfCountry(countryName), cacheArgs, Integer.class);
 	}
 
-	public int getNumberOfCities(String[] args) throws RemoteException {
-		return this.execute(() -> this.server.getNumberOfCities(args));
+	public Integer getNumberOfCities(String[] args) throws RemoteException {
+		Object[] cacheArgs = (Object[]) args;
+		return this.execute(() -> this.server.getNumberOfCities(args), cacheArgs, Integer.class);
 	}
 
-	public int getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
-		return this.execute(() -> this.server.getNumberOfCities(countryName, minPopulation));
+	public Integer getNumberOfCities(String countryName, int minPopulation) throws RemoteException {
+		Object[] cacheArgs = { countryName, minPopulation };
+		return this.execute(() -> this.server.getNumberOfCities(countryName, minPopulation), cacheArgs,
+				Integer.class);
 	}
 
-	public int getNumberOfCountries(String[] args) throws RemoteException {
-
-		return this.execute(() -> this.server.getNumberOfCountries(args));
+	public Integer getNumberOfCountries(String[] args) throws RemoteException {
+		Object[] cacheArgs = (Object[]) args;
+		return this.execute(() -> this.server.getNumberOfCountries(args), cacheArgs, Integer.class);
 	}
 
-	public int getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException {
-		return this.execute(() -> this.server.getNumberOfCountries(cityCount, minPopulation));
+	public Integer getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException {
+		Object[] cacheArgs = { cityCount, minPopulation };
+		return this.execute(() -> this.server.getNumberOfCountries(cityCount, minPopulation), cacheArgs,
+				Integer.class);
 	}
 
-	public int getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException {
-		return this.execute(() -> this.server.getNumberOfCountries(cityCount, minPopulation, maxPopulation));
+	public Integer getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation)
+			throws RemoteException {
+		Object[] cacheArgs = { cityCount, minPopulation, maxPopulation };
+		return this.execute(() -> this.server.getNumberOfCountries(cityCount,
+				minPopulation, maxPopulation), cacheArgs, Integer.class);
+
 	}
 
 	public boolean locatedAt(Identifier zoneId) {

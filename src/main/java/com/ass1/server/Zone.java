@@ -4,21 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import com.ass1.*;
 
 public class Zone implements Identifiable, Comparable<Zone> {
-	private static final Logger logger = Logger.getLogger(Zone.class.getName());
-	private static final Level logLevel = Level.INFO;
-	private static final OnelineFormatter fmt = new OnelineFormatter("zone");
-	private static final ConsoleHandler consHandler = new ConsoleHandler();
-	private static FileHandler fileHandler;
+	private static final Logger logger = LoggerUtil.createLogger(Zone.class.getName(), "server", "zone");
 
 	public final static int LOCAL_DELAY = 80; // ms
 	public final static int EXTERN_DELAY = 170; // 80 + 90 = 170
@@ -35,21 +27,6 @@ public class Zone implements Identifiable, Comparable<Zone> {
 	Identifier id;
 
 	public Zone(Identifier id) {
-		if (fileHandler == null) {
-			try {
-				fileHandler = new FileHandler("log/server.log", true);
-				fileHandler.setFormatter(fmt);
-				logger.addHandler(fileHandler);
-
-				consHandler.setFormatter(fmt);
-				logger.addHandler(consHandler);
-
-				logger.setUseParentHandlers(false);
-				logger.setLevel(Zone.logLevel);
-			} catch (IOException e) {
-				System.err.println("Failed to initialize logger: " + e.getMessage());
-			}
-		}
 		this.id = id;
 	}
 

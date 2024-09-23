@@ -14,18 +14,18 @@ public interface ServerInterface extends Remote {
 
 	void leave() throws RemoteException;
 
-	int getPopulationOfCountry(String[] args) throws RemoteException;
+	Integer getPopulationOfCountry(String[] args) throws RemoteException;
 
-	int getPopulationOfCountry(String countryName) throws RemoteException;
+	Integer getPopulationOfCountry(String countryName) throws RemoteException;
 
-	int getNumberOfCities(String[] args) throws RemoteException;
+	Integer getNumberOfCities(String[] args) throws RemoteException;
 
-	int getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
+	Integer getNumberOfCities(String countryName, int minPopulation) throws RemoteException;
 
-	int getNumberOfCountries(String[] args) throws RemoteException;
+	Integer getNumberOfCountries(String[] args) throws RemoteException;
 
-	int getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException;
+	Integer getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException;
 
-	int getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException;
+	Integer getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException;
 
 }

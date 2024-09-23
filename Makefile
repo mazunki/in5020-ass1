@@ -62,6 +62,7 @@ clean:
 
 purge: clean
 	rm -rf $(BINDIR)/*.jar
+	rm -rf $(LOGDIR)/*.log*
 
 all: jarfiles simfiles
 

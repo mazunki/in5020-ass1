@@ -8,42 +8,26 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.ass1.OnelineFormatter;
+import com.ass1.LoggerUtil;
 
 public class SimulateClient {
-	private static final Logger logger = Logger.getLogger(SimulateClient.class.getName());
-	private static final Level logLevel = Level.FINER;
+	private static final Logger logger = LoggerUtil.createLogger(SimulateClient.class.getName(), "client", "sim",
+			Level.CONFIG);
 
 	private static Integer MAX_QUERIES = null;
 	private static int DELAY_QUERIES = 20; // ms
 
 	public static void main(String[] args) throws InterruptedException {
 
-		try {
-			OnelineFormatter fmt = new OnelineFormatter("clientsim");
-			FileHandler fileHandler = new FileHandler("log/client.log", true);
-			fileHandler.setFormatter(fmt);
-			logger.addHandler(fileHandler);
-
-			ConsoleHandler consHandler = new ConsoleHandler();
-			consHandler.setFormatter(fmt);
-			logger.addHandler(consHandler);
-
-			logger.setUseParentHandlers(false);
-			logger.setLevel(SimulateClient.logLevel);
-		} catch (IOException e) {
-			System.err.println("Failed to initialize logger: " + e.getMessage());
-		}
 		logger.info("Starting SimulateClient");
 
 		String inputFile = "src/main/resources/exercise_1_input.txt";
+		// String inputFile = "src/main/resources/exercise_2_input.txt";
 
 		Pattern pattern = Pattern.compile("(\\w+)\\s+(.*?)\\s*Zone:(\\d+)"); // <method> [<args...> ]Zone:<zone>
 		Pattern argsPattern = Pattern.compile("(\\d+|[\\w&&[^\\d]]+(?:\s+[\\w&&[^\\d]]+)*)"); // <<number>|<multiword>...>
@@ -125,7 +109,7 @@ public class SimulateClient {
 		@Override
 		public void run() {
 			try {
-				this.client = new Client(this.zoneId);
+				this.client = new Client(this.zoneId, true);
 				Object result = client.makeQuery(method, arguments);
 				logger.finer(this + "... " + result);
 			} catch (Exception e) {

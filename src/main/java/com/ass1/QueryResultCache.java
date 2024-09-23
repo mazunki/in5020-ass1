@@ -1,14 +1,10 @@
 package com.ass1;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class QueryResultCache {
@@ -16,92 +12,91 @@ public class QueryResultCache {
 	public static final int DEFAULT_SERVER_CACHE_LIMIT = 150;
 	public static final int DEFAULT_CLIENT_CACHE_LIMIT = 10;
 
-	private static final Logger logger = Logger.getLogger(QueryResultCache.class.getName());
-	private static final Level logLevel = Level.INFO;
-	private static final OnelineFormatter fmt = new OnelineFormatter("cache");
-	private static final ConsoleHandler consHandler = new ConsoleHandler();
-	private static FileHandler fileHandler;
+	private final Logger logger;
+
 	int size;
 	LinkedHashMap<String, Object> cache;
 
+	AtomicInteger hit = new AtomicInteger(0);
+	AtomicInteger miss = new AtomicInteger(0);
+	AtomicInteger cache_lookups = new AtomicInteger(0);
+	private static int HIT_OR_MISS_REPORT_INTERVAL = 10;
+
 	public QueryResultCache(int size) {
+		this(size, "cache");
+	}
+
+	public QueryResultCache(int size, String identifier) {
+		this(size, LoggerUtil.createLogger(QueryResultCache.class.getName() + "_" + identifier, "cache",
+				"#-" + identifier));
+	}
+
+	public QueryResultCache(int size, Logger logger, String identifier) {
+		this(size, LoggerUtil.deriveLogger(logger, "cache-" + identifier));
+	}
+
+	public QueryResultCache(int size, Logger logger) {
 		QueryResultCache self = this;
+		this.logger = logger;
+
 		this.size = size;
 		this.cache = new LinkedHashMap<String, Object>(this.size) {
 			@Override
 			protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
 				boolean should_del = size() > self.size;
 				if (should_del) {
-					logger.finer("removed item from cache");
+					logger.fine("Removed item from cache");
 				} else {
-					logger.finer("did not remove item from cache");
+					logger.finer("Did not remove item from cache");
 				}
 				return should_del;
 			}
 		};
-		if (fileHandler == null) {
-			try {
-				fileHandler = new FileHandler("log/server.log", true);
-				fileHandler.setFormatter(fmt);
-				logger.addHandler(fileHandler);
-
-				consHandler.setFormatter(fmt);
-				logger.addHandler(consHandler);
-				logger.setUseParentHandlers(false);
-
-				logger.setLevel(QueryResultCache.logLevel);
-			} catch (IOException e) {
-				System.err.println("Failed to initialize logger: " + e.getMessage());
-			}
-		}
+		logger.config("Cache is ready!");
 	}
 
 	public boolean has(String method, Object[] args) {
 		String key = QueryResultCache.cacheKeyGenerator(method, args);
 		boolean found = this.cache.containsKey(key);
 		if (found) {
-			logger.finer("found key: " + key);
+			hit.incrementAndGet();
+			logger.finest("Found key: " + key);
+		} else {
+			miss.incrementAndGet();
+			logger.finer("Did NOT find key: " + key);
+		}
+
+		if (cache_lookups.incrementAndGet() % HIT_OR_MISS_REPORT_INTERVAL == 0) {
+			logger.info("Cache hit rate: " + hit.get() + "/" + cache_lookups.get());
 		}
 		return found;
 	}
 
 	public boolean has(Method method, Object[] args) {
-		String key = QueryResultCache.cacheKeyGenerator(method, args);
-		boolean found = this.cache.containsKey(key);
-		if (found) {
-			logger.finer("found key: " + key);
-		}
-		return found;
+		return has(method.getName(), args);
 	}
 
 	public Object get(String method, Object[] args) {
 		String key = QueryResultCache.cacheKeyGenerator(method, args);
 		Object result = this.cache.get(key);
-		logger.info("restoring " + key + " as " + result);
+		logger.fine("Restoring " + key + " as " + result);
 
 		return result;
 	}
 
 	public Object get(Method method, Object[] args) {
-		String key = QueryResultCache.cacheKeyGenerator(method, args);
-		Object result = this.cache.get(key);
-		logger.info("restoring " + key + " as " + result);
-
-		return result;
-	}
-
-	public Object remember(Method method, Object[] args, Object value) {
-		String key = QueryResultCache.cacheKeyGenerator(method, args);
-		logger.fine("[cache] remembering " + key + " as " + value);
-		this.cache.put(key, value);
-		return value;
+		return get(method.getName(), args);
 	}
 
 	public Object remember(String method, Object[] args, Object value) {
 		String key = QueryResultCache.cacheKeyGenerator(method, args);
-		logger.fine("[cache] remembering " + key + " as " + value);
+		logger.finer("Remembering " + key + " as " + value);
 		this.cache.put(key, value);
 		return value;
+	}
+
+	public Object remember(Method method, Object[] args, Object value) {
+		return remember(method.getName(), args, value);
 	}
 
 	public static String cacheKeyGenerator(Method method, Object[] args) {

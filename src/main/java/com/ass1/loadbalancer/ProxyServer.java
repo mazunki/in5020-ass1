@@ -1,6 +1,5 @@
 package com.ass1.loadbalancer;
 
-import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -10,21 +9,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.HashSet;
 
 import com.ass1.*;
 import com.ass1.server.*;
 
 public class ProxyServer extends UnicastRemoteObject implements ProxyServerInterface {
-	private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
-	private static final Level logLevel = Level.INFO;
-	private static final OnelineFormatter fmt = new OnelineFormatter("proxy");
-	private static final ConsoleHandler consHandler = new ConsoleHandler();
-	private static FileHandler fileHandler;
+	private static final Logger logger = LoggerUtil.createLogger(ProxyServer.class.getName(), "server", "proxy");
 
 	WraparoundTreeSet<Zone> zones = new WraparoundTreeSet<Zone>(); // guarantees order of elements, a formal
 									// requirement
@@ -32,22 +23,6 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	Registry registry;
 
 	public ProxyServer(int port) throws RemoteException {
-		if (fileHandler == null) {
-			try {
-				fileHandler = new FileHandler("log/server.log", true);
-				fileHandler.setFormatter(fmt);
-				logger.addHandler(fileHandler);
-
-				consHandler.setFormatter(fmt);
-				logger.addHandler(consHandler);
-
-				logger.setUseParentHandlers(false);
-				logger.setLevel(ProxyServer.logLevel);
-			} catch (IOException e) {
-				System.err.println("Failed to initialize logger: " + e.getMessage());
-			}
-		}
-
 		logger.info("Starting proxy server");
 
 		this.registry = LocateRegistry.createRegistry(port);
