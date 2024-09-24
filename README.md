@@ -4,7 +4,7 @@
 Repository for the first assignment of IN5020, by group 7.
 
 # Project layout
-A report is provided under `docs/report.pdf` providing an extensive explanation of the project. A slightly draft-README is also found under `docs/`.
+A report is provided under `docs/report.pdf` providing an extensive explanation of the project. A draft README with some implementation details is also found under `docs/`, together with screenshots and graphs as expected by the delivery. The delivery also includes logs, even if ideally one would purge them prior to running a simulation (e.g `make purge sim_server`)
 
 # Running
 
