@@ -1,5 +1,7 @@
 package com.ass1.server;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import com.ass1.data.Geoname;
@@ -49,50 +51,30 @@ public class Server implements ServerInterfaceImpl {
 	}
 
 	public Integer getNumberOfCountries(int cityCount, int minPopulation) {
-		List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
-		int matchingCountryCount = 0;
+		HashMap<String, Integer> cityCounter = new HashMap<String, Integer>();
 
-		for (String countryName : countryNames) {
-			int matchingCityCount = 0;
+		for (Geoname city : GeonameLoader.getCities()) {
+			int population = city.getPopulation();
+			String cityName = city.getCountryName();
 
-			List<Geoname> cities = GeonameLoader.getByName(countryName);
-
-			for (Geoname city : cities) {
-				if (city.getPopulation() >= minPopulation) {
-					matchingCityCount++;
-				}
-
-				if (matchingCityCount >= cityCount) {
-					matchingCountryCount++;
-					break;
-				}
+			if (population >= minPopulation) {
+				cityCounter.put(cityName, cityCounter.getOrDefault(cityName, 0) + 1);
 			}
 		}
-
-		return matchingCountryCount;
+		return (int) cityCounter.values().stream().filter(count -> count >= cityCount).count();
 	}
 
 	public Integer getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) {
-		List<String> countryNames = GeonameLoader.getAllCountryNames(); // Get all country names
-		int matchingCountryCount = 0;
+		HashMap<String, Integer> cityCounter = new HashMap<String, Integer>();
 
-		for (String countryName : countryNames) {
-			int matchingCityCount = 0;
+		for (Geoname city : GeonameLoader.getCities()) {
+			int population = city.getPopulation();
+			String cityName = city.getCountryName();
 
-			List<Geoname> cities = GeonameLoader.getByName(countryName);
-
-			for (Geoname city : cities) {
-				if (city.getPopulation() >= minPopulation && city.getPopulation() <= maxPopulation) {
-					matchingCityCount++;
-				}
-
-				if (matchingCityCount >= cityCount) {
-					matchingCountryCount++;
-					break;
-				}
+			if (population >= minPopulation && population <= maxPopulation) {
+				cityCounter.put(cityName, cityCounter.getOrDefault(cityName, 0) + 1);
 			}
 		}
-
-		return matchingCountryCount;
+		return (int) cityCounter.values().stream().filter(count -> count >= cityCount).count();
 	}
 }
