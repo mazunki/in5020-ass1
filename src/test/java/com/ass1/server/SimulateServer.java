@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import com.ass1.loadbalancer.*;
 
 public class SimulateServer {
-	public static void main(String[] args) throws RemoteException, InterruptedException {
+	public static void main(String[] args) throws RemoteException {
 		ProxyServer proxyserver = new ProxyServer(1099);
 
 		ServerStub[] servers = {
@@ -25,7 +25,11 @@ public class SimulateServer {
 			proxyserver.start();
 		});
 
-		Thread.sleep(500);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			return;
+		}
 
 		for (ServerStub server : servers) {
 			executor.submit(() -> {
@@ -35,12 +39,21 @@ public class SimulateServer {
 					e.printStackTrace();
 				}
 			});
-			Thread.sleep(20);
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				System.err.println("Was submitting tasks...");
+			}
 		}
 
 		executor.shutdown();
 
-		while (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+		try {
+			while (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+			}
+		} catch (InterruptedException e) {
+			System.out.println("Okay bye");
+			proxyserver.stop();
 		}
 	}
 }

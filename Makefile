@@ -17,6 +17,7 @@ PROXY_JAR = $(BINDIR)/proxy.jar
 
 CLIENT_SIM_JAR = $(BINDIR)/client_sim.jar
 SERVER_SIM_JAR = $(BINDIR)/server_sim.jar
+SERVER_STOP_JAR = $(BINDIR)/server_stop.jar
 
 $(LOGDIR):
 	@mkdir -p $(LOGDIR)
@@ -45,6 +46,10 @@ $(PROXY_JAR): classfiles | $(BINDIR)
 
 $(CLIENT_SIM_JAR): classfiles testfiles | $(BINDIR)
 	jar cfe $(CLIENT_SIM_JAR) com.ass1.client.SimulateClient -C $(CLASSPATH) .
+
+$(SERVER_STOP_JAR): classfiles testfiles | $(BINDIR)
+	jar cfe $(SERVER_STOP_JAR) com.ass1.server.StopProxyServer -C $(CLASSPATH) .
+
 
 $(SERVER_SIM_JAR): classfiles testfiles | $(BINDIR)
 	jar cfe $(SERVER_SIM_JAR) com.ass1.server.SimulateServer -C $(CLASSPATH) .
@@ -77,6 +82,9 @@ sim_client: $(CLIENT_SIM_JAR) | $(LOGDIR)
 
 sim_server: $(SERVER_SIM_JAR) | $(LOGDIR)
 	java -jar $(SERVER_SIM_JAR)
+
+sim_stop: $(SERVER_STOP_JAR)
+	java -jar $(SERVER_STOP_JAR)
 
 
 .PHONY: all purge clean test sim_client sim_server

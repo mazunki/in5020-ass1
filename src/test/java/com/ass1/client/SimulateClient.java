@@ -34,12 +34,12 @@ public class SimulateClient {
 	private static ProxyServerInterface proxyServer;
 	private static Registry proxyRegistry;
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) {
 
 		logger.info("Starting SimulateClient");
 
-		// String inputFile = "src/main/resources/exercise_1_input.txt";
-		String inputFile = "src/main/resources/exercise_2_input.txt";
+		String inputFile = "src/main/resources/exercise_1_input.txt";
+		// String inputFile = "src/main/resources/exercise_2_input.txt";
 
 		Pattern pattern = Pattern.compile("(\\w+)\\s+(.*?)\\s*Zone:(\\d+)"); // <method> [<args...> ]Zone:<zone>
 		Pattern argsPattern = Pattern.compile("(\\d+|[\\w&&[^\\d]]+(?:\s+[\\w&&[^\\d]]+)*)"); // <<number>|<multiword>...>
@@ -95,8 +95,30 @@ public class SimulateClient {
 			throw new RuntimeException("Failed to find proxy server reference...");
 		}
 
-		SimulateClient.start_tasks(DELAY_QUERIES_1);
-		SimulateClient.start_tasks(DELAY_QUERIES_2);
+		System.out.println("Starting round 1");
+		try {
+			SimulateClient.start_tasks(DELAY_QUERIES_1);
+		} catch (InterruptedException e) {
+			try {
+				proxyServer.stop();
+			} catch (RemoteException e1) {
+				System.err.println("Couldn't stop proxy server (round 1)");
+			}
+		}
+		System.out.println("Round 1 finalized.");
+
+		System.out.println("Starting round 2");
+		try {
+			SimulateClient.start_tasks(DELAY_QUERIES_2);
+		} catch (InterruptedException e) {
+			try {
+				proxyServer.stop();
+			} catch (RemoteException e1) {
+				System.err.println("Couldn't stop proxy server (round 2)");
+				return;
+			}
+		}
+		System.out.println("Round 2 finalized.");
 
 		try {
 			SimulateClient.proxyServer.stop();
@@ -132,7 +154,7 @@ public class SimulateClient {
 			double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
 			double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
 			logger.info(entry.getKey() +
-					" turn-around: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
+					" turnaround: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
 		}
 
 		logger.info("Ending simulation");
