@@ -2,6 +2,8 @@ package com.ass1.server;
 
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ass1.data.Geoname;
 import com.ass1.data.GeonameLoader;
@@ -10,11 +12,22 @@ import com.ass1.*;
 public class Server implements ServerInterface {
 	Identifier id;
 	ServerStub stub;
+	QueryResultCache cache;
 
-	public Server(Identifier serverId, Identifier zoneId) throws RemoteException {
+	private static final Logger logger = LoggerUtil.createLogger(Server.class.getName(), "server", "server");
+
+
+	public Server(Identifier serverId, Identifier zoneId, boolean enableCache) throws RemoteException {
 		this.id = serverId;
 		this.stub = new ServerStub(this, zoneId);
+
+		// If caching is enabled, initialize the cache
+		if (enableCache) {
+			Logger cacheLogger = LoggerUtil.deriveLogger(Server.logger, "cache", Level.INFO);
+			this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT, cacheLogger);
+		}
 	}
+
 
 	public Server(String serverId, String zoneId) throws RemoteException {
 		this.id = new Identifier(serverId);
