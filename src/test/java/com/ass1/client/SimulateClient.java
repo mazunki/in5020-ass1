@@ -223,7 +223,9 @@ public class SimulateClient {
 						System.currentTimeMillis());
 
 				logger.finer(this + "... " + result);
-				logger.finest(this.method + " turnaround: " + turnaround + "ms");
+				logger.finest(this.method + " " + String.join(" ", this.arguments)
+						+ "; turnaround time: "
+						+ turnaround + "ms");
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());
 			}
@@ -252,7 +254,7 @@ public class SimulateClient {
 			List<Long> avgs = ClientTask.meter_turnaround.getOrDefault(method, new ArrayList<>());
 			avgs.add(duration);
 			ClientTask.meter_turnaround.put(method, avgs);
-			return avgs.getLast();
+			return duration;
 		}
 
 		public String toString() {

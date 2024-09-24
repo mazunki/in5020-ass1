@@ -5,6 +5,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -33,8 +34,8 @@ public class ServerStub implements ServerInterface {
 	private ExecutorService executor;
 	int counter = 0;
 	private static int REPORT_INTERVAL = 18;
-	private HashMap<String, List<Long>> meter_execution = new HashMap<String, List<Long>>();
-	private HashMap<String, List<Long>> meter_waiting = new HashMap<String, List<Long>>();
+	private volatile HashMap<String, List<Long>> meter_execution = new HashMap<String, List<Long>>();
+	private volatile HashMap<String, List<Long>> meter_waiting = new HashMap<String, List<Long>>();
 
 	QueryResultCache cache;
 	private static final Logger logger = LoggerUtil.createLogger(Server.class.getName(), "server", "server");
@@ -179,18 +180,20 @@ public class ServerStub implements ServerInterface {
 				+ " tasks for " + this.getRegistryName());
 	}
 
-	public void addExecutionMeasurement(String method, long start, long end) {
+	public synchronized long addExecutionMeasurement(String method, long start, long end) {
 		long duration = end - start;
 		List<Long> avgs = this.meter_execution.getOrDefault(method, new ArrayList<>());
 		avgs.add(duration);
 		this.meter_execution.put(method, avgs);
+		return duration;
 	}
 
-	public void addWaitingTime(String method, long start, long end) {
+	public synchronized long addWaitingTime(String method, long start, long end) {
 		long duration = end - start;
 		List<Long> avgs = this.meter_waiting.getOrDefault(method, new ArrayList<>());
 		avgs.add(duration);
 		this.meter_waiting.put(method, avgs);
+		return duration;
 	}
 
 	private <T> T execute(Callable<T> task, Object[] cache_args, Class<T> return_type) throws RemoteException {
@@ -206,14 +209,19 @@ public class ServerStub implements ServerInterface {
 		if (cache.has(methodName, cache_args)) {
 			return return_type.cast(cache.get(methodName, cache_args));
 		}
+		String argument_string = String.join(" ",
+				Arrays.stream(cache_args).map(Object::toString).toArray(String[]::new));
 
 		try {
 			Future<T> future = this.executor.submit(() -> {
 				long start_exec_time = System.currentTimeMillis();
 				this.simulateExecutionDelay();
 				T result = task.call();
-				this.addExecutionMeasurement(methodName, start_exec_time,
+				long execution_time = this.addExecutionMeasurement(methodName, start_exec_time,
 						System.currentTimeMillis());
+				logger.finest(methodName + " " + argument_string + "; execution time: " + execution_time
+						+ "ms, parsed by "
+						+ this.getRegistryName());
 
 				return result;
 			});
@@ -222,10 +230,14 @@ public class ServerStub implements ServerInterface {
 
 			long start_time = System.currentTimeMillis();
 			T result = future.get();
-			this.addWaitingTime(methodName, start_time, System.currentTimeMillis());
+			long waiting_time = this.addWaitingTime(methodName, start_time, System.currentTimeMillis());
 
 			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
 			logger.fine("Completed task on " + this.getRegistryName());
+			logger.finest(methodName + " " + argument_string + "; waiting time: "
+					+ waiting_time
+					+ "ms, parsed by "
+					+ this.getRegistryName());
 
 			cache.remember(methodName, cache_args, result);
 			return result;
