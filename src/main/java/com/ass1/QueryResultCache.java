@@ -27,8 +27,8 @@ public class QueryResultCache {
 	}
 
 	public QueryResultCache(int size, String identifier) {
-		this(size, LoggerUtil.createLogger(QueryResultCache.class.getName() + "_" + identifier, "cache",
-				"#-" + identifier));
+		this(size, LoggerUtil.createLogger(QueryResultCache.class.getName(), "cache",
+				"@" + identifier));
 	}
 
 	public QueryResultCache(int size, Logger logger, String identifier) {

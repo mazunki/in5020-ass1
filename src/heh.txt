@@ -1,0 +1,87 @@
+test/java/com/ass1/client/SimulateClient.java:	private static final Logger logger = LoggerUtil.createLogger(SimulateClient.class.getName(), "client", "sim",
+test/java/com/ass1/client/SimulateClient.java:		logger.info("Starting SimulateClient");
+test/java/com/ass1/client/SimulateClient.java:					logger.warning("Invalid query on line: " + lineno + ": " + line);
+test/java/com/ass1/client/SimulateClient.java:			logger.log(Level.SEVERE, "Error reading input file: " + e.getMessage());
+test/java/com/ass1/client/SimulateClient.java:		logger.info("Parsed a total of " + tasks.size() + " tasks");
+test/java/com/ass1/client/SimulateClient.java:			logger.severe("Couldn't terminate sesssion");
+test/java/com/ass1/client/SimulateClient.java:		logger.info("All simulations complete");
+test/java/com/ass1/client/SimulateClient.java:		logger.config("Using " + (nproc - 1) + " processors");
+test/java/com/ass1/client/SimulateClient.java:		logger.info("Submitting tasks with a delay of " + delay + "ms");
+test/java/com/ass1/client/SimulateClient.java:		logger.info("All tasks submitted, awaiting termination");
+test/java/com/ass1/client/SimulateClient.java:			logger.info(entry.getKey() +
+test/java/com/ass1/client/SimulateClient.java:		logger.info("Ending simulation");
+test/java/com/ass1/client/SimulateClient.java:				logger.finer(this + "... " + result);
+test/java/com/ass1/client/SimulateClient.java:				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());
+test/java/com/ass1/client/SimulateClient.java:				logger.info("Completed " + counter + " tasks.");
+main/java/com/ass1/LoggerUtil.java:	public static Logger createLogger(String loggerName, String fileTarget, String context) {
+main/java/com/ass1/LoggerUtil.java:		return LoggerUtil.createLogger(loggerName, fileTarget, context, Level.CONFIG);
+main/java/com/ass1/LoggerUtil.java:	public static Logger createLogger(String loggerName, String fileTarget, String context, Level level) {
+main/java/com/ass1/LoggerUtil.java:		Logger logger = Logger.getLogger(loggerName);
+main/java/com/ass1/LoggerUtil.java:		logger.setUseParentHandlers(false);
+main/java/com/ass1/LoggerUtil.java:		logger.addHandler(consoleHandler);
+main/java/com/ass1/LoggerUtil.java:			logger.addHandler(fileHandler);
+main/java/com/ass1/LoggerUtil.java:			System.err.println("Failed to initialize file logger for " + loggerName + "/" + context
+main/java/com/ass1/LoggerUtil.java:		logger.setLevel(Level.ALL);
+main/java/com/ass1/LoggerUtil.java:		return logger;
+main/java/com/ass1/LoggerUtil.java:	 * public static Logger deriveLogger(Logger logger, String context) {
+main/java/com/ass1/LoggerUtil.java:	 * return LoggerUtil.deriveLogger(logger, context, logger.getLevel());
+main/java/com/ass1/LoggerUtil.java:	 * public static Logger deriveLogger(Logger logger, String context, Level level)
+main/java/com/ass1/LoggerUtil.java:	 * Logger derivedLogger = Logger.getLogger(logger.getName());
+main/java/com/ass1/LoggerUtil.java:	 * for (Handler handler : logger.getHandlers()) {
+main/java/com/ass1/LoggerUtil.java:	 * logger.addHandler();
+main/java/com/ass1/QueryResultCache.java:	private final Logger logger;
+main/java/com/ass1/QueryResultCache.java:	public QueryResultCache(int size, Logger logger, String identifier) {
+main/java/com/ass1/QueryResultCache.java:	public QueryResultCache(int size, Logger logger) {
+main/java/com/ass1/QueryResultCache.java:		this.logger = logger;
+main/java/com/ass1/QueryResultCache.java:					logger.fine("Removed item from cache");
+main/java/com/ass1/QueryResultCache.java:					logger.finer("Did not remove item from cache");
+main/java/com/ass1/QueryResultCache.java:		logger.config("Cache is ready!");
+main/java/com/ass1/QueryResultCache.java:			logger.finest("Found key: " + key);
+main/java/com/ass1/QueryResultCache.java:			logger.finer("Did NOT find key: " + key);
+main/java/com/ass1/QueryResultCache.java:			logger.info("Cache hit rate: " + hit.get() + "/" + cache_lookups.get());
+main/java/com/ass1/QueryResultCache.java:		logger.fine("Restoring " + key + " as " + result);
+main/java/com/ass1/QueryResultCache.java:		logger.finer("Remembering " + key + " as " + value);
+main/java/com/ass1/loadbalancer/ProxyServer.java:	private static final Logger logger = LoggerUtil.createLogger(ProxyServer.class.getName(), "server", "proxy");
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("Starting proxy server");
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("ProxyServer listening on port " + port);
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.info("Added new zone: " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.info("Attmpted to register duplicate zone: " + zone.getId());
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.info("Added new zone: " + zone + ". Currently got " + this.zones.size() + " zones.");
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.info("Attmpted to register duplicate zone: " + zoneId);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.fine("Starting task from " + pre + " => " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.fine("Released task from " + pre + " => " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.fine("Server '" + serverId + "' wants to leave from " + zoneId);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("Server '" + serverId + "' left " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("Registered new server '" + serverId + "' on " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.fine("Found local zone for " + zoneId + ": " + local_zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.fine("Local zone was busy, but so was everyone else. Using " + local_zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.fine("Local zone was busy. Found " + extern_zones.size()
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("ProxyServer started and ready to receive servers");
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("Got request to terminate universe. Current zonecount: " + this.zones.size());
+main/java/com/ass1/loadbalancer/ProxyServer.java:				logger.severe("Couldn't stop " + zone);
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("There is no universe. Get lost.");
+main/java/com/ass1/loadbalancer/ProxyServer.java:			logger.severe("Couldn't unexport proxy server");
+main/java/com/ass1/loadbalancer/ProxyServer.java:		logger.info("Stopping proxy loop. Bye!");
+main/java/com/ass1/client/Client.java:	private static final Logger logger = LoggerUtil.createLogger(ServerStub.class.getName(), "client", "client");
+main/java/com/ass1/server/ServerStub.java:	private static final Logger logger = LoggerUtil.createLogger(Server.class.getName(), "server", "server");
+main/java/com/ass1/server/ServerStub.java:		logger.info("Connecting to ProxyServer from " + serverRegister);
+main/java/com/ass1/server/ServerStub.java:		logger.info("Registered " + serverRegister + " on proxy server");
+main/java/com/ass1/server/ServerStub.java:				logger.warning("Interrupted execution thread");
+main/java/com/ass1/server/ServerStub.java:			logger.info(entry.getKey() +
+main/java/com/ass1/server/ServerStub.java:			logger.info(entry.getKey() +
+main/java/com/ass1/server/ServerStub.java:		logger.info("Shutting down " + this.id);
+main/java/com/ass1/server/ServerStub.java:		logger.info(this.id + " is now offline.");
+main/java/com/ass1/server/ServerStub.java:		logger.info("Execution queue contains " + ex.getQueue().size()
+main/java/com/ass1/server/ServerStub.java:		logger.finer("Received task on " + this.getRegistryName());
+main/java/com/ass1/server/ServerStub.java:			logger.finer("Submitted task on " + this.getRegistryName());
+main/java/com/ass1/server/ServerStub.java:			logger.fine("Completed task on " + this.getRegistryName());
+main/java/com/ass1/server/Zone.java:	private static final Logger logger = LoggerUtil.createLogger(Zone.class.getName(), "server", "zone");
+main/java/com/ass1/server/Zone.java:				logger.fine("Found idling server in " + this);
+main/java/com/ass1/server/Zone.java:		logger.fine("All servers in zone " + this + " were busy!");
+main/java/com/ass1/server/Zone.java:			logger.warning("Couldn't grab server");
+main/java/com/ass1/server/Zone.java:		logger.finer(" Grabbed a request slot on " + this);
+main/java/com/ass1/server/Zone.java:			logger.warning("Couldn't release server");
+main/java/com/ass1/server/Zone.java:		logger.finer("Released a request slot on " + this);
+main/java/com/ass1/server/Zone.java:		logger.info(this.toString());
+main/java/com/ass1/server/Zone.java:		logger.info("Got request to terminate servers on " + this);
+main/java/com/ass1/server/Zone.java:				logger.severe("Couldn't terminate " + server);

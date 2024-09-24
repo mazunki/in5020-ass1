@@ -18,7 +18,7 @@ public class LoggerUtil {
 		Formatter fmt = new OnelineFormatter(context);
 
 		try {
-			FileHandler fileHandler = new FileHandler(LOG_DIR + fileTarget + ".log", true);
+			FileHandler fileHandler = new FileHandler(LOG_DIR + fileTarget + "_" + context + ".log", true);
 			fileHandler.setFormatter(fmt);
 			fileHandler.setLevel(Level.ALL);
 
