@@ -13,5 +13,7 @@ After having run a simulation, generate plots as follows
 ```sh
 python -m venv venv
 . ./venv/bin/activate
+pip install numpy matplotlib
+
 python src/graphs.py
 ```
