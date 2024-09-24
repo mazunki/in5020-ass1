@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -20,20 +23,20 @@ public class SimulateClient {
 			Level.CONFIG);
 
 	private static Integer MAX_QUERIES = null;
-	private static int DELAY_QUERIES = 20; // ms
+	private static int DELAY_QUERIES_1 = 50; // ms
+	private static int DELAY_QUERIES_2 = 20; // ms
+	private static List<ClientTask> tasks = new ArrayList<>();
 
 	public static void main(String[] args) throws InterruptedException {
 
 		logger.info("Starting SimulateClient");
 
-		String inputFile = "src/main/resources/exercise_1_input.txt";
-		// String inputFile = "src/main/resources/exercise_2_input.txt";
+		// String inputFile = "src/main/resources/exercise_1_input.txt";
+		String inputFile = "src/main/resources/exercise_2_input.txt";
 
 		Pattern pattern = Pattern.compile("(\\w+)\\s+(.*?)\\s*Zone:(\\d+)"); // <method> [<args...> ]Zone:<zone>
 		Pattern argsPattern = Pattern.compile("(\\d+|[\\w&&[^\\d]]+(?:\s+[\\w&&[^\\d]]+)*)"); // <<number>|<multiword>...>
 		Matcher matcher, argsMatcher;
-
-		List<ClientTask> tasks = new ArrayList<>();
 
 		try (BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
 			int lineno = 0;
@@ -69,23 +72,39 @@ public class SimulateClient {
 		}
 		logger.info("Parsed a total of " + tasks.size() + " tasks");
 
+		SimulateClient.start_tasks(DELAY_QUERIES_1);
+
+		SimulateClient.start_tasks(DELAY_QUERIES_2);
+
+		logger.info("All simulations complete");
+	}
+
+	public static void start_tasks(int delay) throws InterruptedException {
 		int nproc = Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newFixedThreadPool(nproc - 1);
 		logger.config("Using " + (nproc - 1) + " processors");
 
-		logger.info("Submitting tasks");
+		logger.info("Submitting tasks with a delay of " + delay + "ms");
 
 		// for (ClientTask task : tasks.subList(792, 850)) {
 		for (ClientTask task : tasks) {
 			executor.submit(task);
-			Thread.sleep(DELAY_QUERIES);
+			Thread.sleep(delay);
 		}
 
 		logger.info("All tasks submitted, awaiting termination");
 
-		// executor.shutdown(); // stop accepting tasks
+		executor.shutdown(); // stop accepting tasks
 		while (!executor.awaitTermination(50, TimeUnit.MILLISECONDS)) {
 			// spin until the already-accepted tasks are done.
+		}
+
+		for (Entry<String, List<Long>> entry : ClientTask.meter_turnaround.entrySet()) {
+			double avg = entry.getValue().stream().mapToDouble(Long::longValue).average().orElse(0.0);
+			double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
+			double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
+			logger.info(entry.getKey() +
+					" turn-around: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
 		}
 
 		logger.info("Ending simulation");
@@ -99,6 +118,8 @@ public class SimulateClient {
 		private final int lineno;
 		private static int counter = 0;
 
+		private static HashMap<String, List<Long>> meter_turnaround = new HashMap<String, List<Long>>();
+
 		public ClientTask(String zoneId, String method, String[] arguments, int lineno) {
 			this.zoneId = zoneId;
 			this.method = method;
@@ -110,7 +131,10 @@ public class SimulateClient {
 		public void run() {
 			try {
 				this.client = new Client(this.zoneId, true);
+				long start_time = System.currentTimeMillis();
 				Object result = client.makeQuery(method, arguments);
+
+				ClientTask.addTurnaround(this.method, start_time, System.currentTimeMillis());
 				logger.finer(this + "... " + result);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());
@@ -120,6 +144,13 @@ public class SimulateClient {
 			if (counter % 300 == 0) {
 				logger.info("Completed " + counter + " tasks.");
 			}
+		}
+
+		public static void addTurnaround(String method, long start, long end) {
+			long duration = end - start;
+			List<Long> avgs = ClientTask.meter_turnaround.getOrDefault(method, new ArrayList<>());
+			avgs.add(duration);
+			ClientTask.meter_turnaround.put(method, avgs);
 		}
 
 		public String toString() {

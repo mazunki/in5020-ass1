@@ -7,6 +7,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,9 +85,10 @@ public class Client {
 		}
 
 		Object result = null;
+		String method_name = method.toLowerCase();
 
 		try {
-			switch (method.toLowerCase()) {
+			switch (method_name) {
 				case "getpopulationofcountry":
 					switch (args.length) {
 						case 1:
