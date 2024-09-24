@@ -67,7 +67,7 @@ public class QueryResultCache {
 		}
 
 		if (cache_lookups.incrementAndGet() % HIT_OR_MISS_REPORT_INTERVAL == 0) {
-			logger.info("Cache hit rate: " + hit.get() + "/" + cache_lookups.get());
+			logger.fine("Cache hit rate: " + hit.get() + "/" + cache_lookups.get());
 		}
 		return found;
 	}

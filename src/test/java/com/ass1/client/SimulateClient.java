@@ -23,6 +23,7 @@ import com.ass1.LoggerUtil;
 import com.ass1.loadbalancer.ProxyServerInterface;
 
 public class SimulateClient {
+
 	private static final Logger logger = LoggerUtil.createLogger(SimulateClient.class.getName(), "client", "sim",
 			Level.CONFIG);
 
@@ -31,15 +32,64 @@ public class SimulateClient {
 	private static int DELAY_QUERIES_2 = 20; // ms
 	private static List<ClientTask> tasks = new ArrayList<>();
 
+	private static String fullInputFile = "src/main/resources/exercise_1_input.txt";
+	private static String shortInputFile = "src/main/resources/exercise_2_input.txt";
+
 	private static ProxyServerInterface proxyServer;
 	private static Registry proxyRegistry;
 
-	public static void main(String[] args) {
+	private static ExecutorService executor;
+	private static final int nproc = Runtime.getRuntime().availableProcessors();
+
+	public static void main(String[] args) throws InterruptedException {
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				executor.shutdown();
+				try {
+					if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+						executor.shutdownNow();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		logger.info("Starting SimulateClient");
 
-		String inputFile = "src/main/resources/exercise_1_input.txt";
-		// String inputFile = "src/main/resources/exercise_2_input.txt";
+		parse(SimulateClient.fullInputFile);
+		// parse(SimulateClient.shortInputFile);
+
+		try {
+			SimulateClient.proxyRegistry = LocateRegistry.getRegistry(Client.PROXY_SERVER,
+					Client.PROXY_PORT);
+		} catch (RemoteException e) {
+			throw new RuntimeException("Could not connect to proxy server... 😅");
+		}
+		try {
+			SimulateClient.proxyServer = (ProxyServerInterface) SimulateClient.proxyRegistry
+					.lookup(ProxyServerInterface.PROXY_IDENTIFIER);
+		} catch (RemoteException e) {
+			throw new RuntimeException("Failed to connect with proxy server! 😷" + e.getMessage());
+		} catch (NotBoundException e) {
+			throw new RuntimeException("Failed to find proxy server reference...");
+		}
+
+		SimulateClient.start_tasks(DELAY_QUERIES_1);
+		waitForTasks();
+
+		try {
+			SimulateClient.proxyServer.stop();
+		} catch (RemoteException e) {
+			logger.severe("Couldn't terminate sesssion");
+		}
+		System.out.println("Done");
+
+		logger.info("All simulations complete");
+	}
+
+	public static void parse(String inputFile) {
 
 		Pattern pattern = Pattern.compile("(\\w+)\\s+(.*?)\\s*Zone:(\\d+)"); // <method> [<args...> ]Zone:<zone>
 		Pattern argsPattern = Pattern.compile("(\\d+|[\\w&&[^\\d]]+(?:\s+[\\w&&[^\\d]]+)*)"); // <<number>|<multiword>...>
@@ -79,85 +129,65 @@ public class SimulateClient {
 		}
 		logger.info("Parsed a total of " + tasks.size() + " tasks");
 
-		try {
-			SimulateClient.proxyRegistry = LocateRegistry.getRegistry(Client.PROXY_SERVER,
-					Client.PROXY_PORT);
-		} catch (RemoteException e) {
-			throw new RuntimeException("Could not connect to proxy server... 😅");
-		}
-
-		try {
-			SimulateClient.proxyServer = (ProxyServerInterface) SimulateClient.proxyRegistry
-					.lookup(ProxyServerInterface.PROXY_IDENTIFIER);
-		} catch (RemoteException e) {
-			throw new RuntimeException("Failed to connect with proxy server! 😷" + e.getMessage());
-		} catch (NotBoundException e) {
-			throw new RuntimeException("Failed to find proxy server reference...");
-		}
-
-		System.out.println("Starting round 1");
-		try {
-			SimulateClient.start_tasks(DELAY_QUERIES_1);
-		} catch (InterruptedException e) {
-			try {
-				proxyServer.stop();
-			} catch (RemoteException e1) {
-				System.err.println("Couldn't stop proxy server (round 1)");
-			}
-		}
-		System.out.println("Round 1 finalized.");
-
-		System.out.println("Starting round 2");
-		try {
-			SimulateClient.start_tasks(DELAY_QUERIES_2);
-		} catch (InterruptedException e) {
-			try {
-				proxyServer.stop();
-			} catch (RemoteException e1) {
-				System.err.println("Couldn't stop proxy server (round 2)");
-				return;
-			}
-		}
-		System.out.println("Round 2 finalized.");
-
-		try {
-			SimulateClient.proxyServer.stop();
-		} catch (RemoteException e) {
-			logger.severe("Couldn't terminate sesssion");
-		}
-
-		logger.info("All simulations complete");
 	}
 
-	public static void start_tasks(int delay) throws InterruptedException {
-		int nproc = Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newFixedThreadPool(nproc - 1);
+	public static void start_tasks(int delay) {
 		logger.config("Using " + (nproc - 1) + " processors");
+		executor = Executors.newFixedThreadPool(nproc - 1);
 
 		logger.info("Submitting tasks with a delay of " + delay + "ms");
 
-		// for (ClientTask task : tasks.subList(792, 850)) {
 		for (ClientTask task : tasks) {
+			if (executor.isShutdown()) {
+				ClientTask.report();
+				break;
+			}
+
 			executor.submit(task);
-			Thread.sleep(delay);
+			try {
+				Thread.sleep(delay);
+			} catch (InterruptedException e) {
+				ClientTask.report();
+				break;
+			}
+		}
+	}
+
+	public static void waitForTasks() {
+		if (!executor.isShutdown()) {
+			logger.info("All tasks submitted, awaiting termination");
+			executor.shutdown();
+		} else {
+			logger.info("Interrupted early.");
 		}
 
-		logger.info("All tasks submitted, awaiting termination");
-
-		executor.shutdown(); // stop accepting tasks
-		while (!executor.awaitTermination(50, TimeUnit.MILLISECONDS)) {
-			// spin until the already-accepted tasks are done.
+		try {
+			while (!executor.awaitTermination(50, TimeUnit.MILLISECONDS)) {
+				if (Thread.currentThread().isInterrupted()) {
+					SimulateClient.shutdown();
+					break;
+				}
+			}
+		} catch (InterruptedException e) {
+			ClientTask.report();
+			SimulateClient.shutdown();
 		}
+	}
 
-		for (Entry<String, List<Long>> entry : ClientTask.meter_turnaround.entrySet()) {
-			double avg = entry.getValue().stream().mapToDouble(Long::longValue).average().orElse(0.0);
-			double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
-			double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
-			logger.info(entry.getKey() +
-					" turnaround: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
+	public static void shutdown() {
+		ClientTask.report();
+		if (executor != null && !executor.isShutdown()) {
+			executor.shutdown();
+
+			try {
+				if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+					executor.shutdownNow();
+				}
+			} catch (InterruptedException e) {
+				executor.shutdownNow();
+			}
 		}
-
-		logger.info("Ending simulation");
+		logger.info("Simulation end.");
 	}
 
 	static class ClientTask implements Runnable {
@@ -168,7 +198,7 @@ public class SimulateClient {
 		private final int lineno;
 		private static int counter = 0;
 
-		private static HashMap<String, List<Long>> meter_turnaround = new HashMap<String, List<Long>>();
+		private static volatile HashMap<String, List<Long>> meter_turnaround = new HashMap<String, List<Long>>();
 
 		public ClientTask(String zoneId, String method, String[] arguments, int lineno) {
 			this.zoneId = zoneId;
@@ -179,14 +209,21 @@ public class SimulateClient {
 
 		@Override
 		public void run() {
+			if (Thread.currentThread().isInterrupted()) {
+				SimulateClient.shutdown();
+				return;
+			}
+
 			try {
 				this.client = new Client(this.zoneId, true);
 				long start_time = System.currentTimeMillis();
 				Object result = client.makeQuery(method, arguments);
 
-				ClientTask.addTurnaround(this.method, start_time, System.currentTimeMillis());
+				long turnaround = ClientTask.addTurnaround(this.method, start_time,
+						System.currentTimeMillis());
 
 				logger.finer(this + "... " + result);
+				logger.finest(this.method + " turnaround: " + turnaround + "ms");
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());
 			}
@@ -194,14 +231,28 @@ public class SimulateClient {
 			counter++;
 			if (counter % 300 == 0) {
 				logger.info("Completed " + counter + " tasks.");
+				ClientTask.report();
 			}
 		}
 
-		public static void addTurnaround(String method, long start, long end) {
+		public static void report() {
+			for (Entry<String, List<Long>> entry : ClientTask.meter_turnaround.entrySet()) {
+				double avg = entry.getValue().stream().mapToDouble(Long::longValue).average()
+						.orElse(0.0);
+				double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
+				double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
+				logger.info(entry.getKey() + " turnaround: avg " + avg + "ms, min " + min + "ms, max "
+						+ max
+						+ "ms");
+			}
+		}
+
+		public synchronized static Long addTurnaround(String method, long start, long end) {
 			long duration = end - start;
 			List<Long> avgs = ClientTask.meter_turnaround.getOrDefault(method, new ArrayList<>());
 			avgs.add(duration);
 			ClientTask.meter_turnaround.put(method, avgs);
+			return avgs.getLast();
 		}
 
 		public String toString() {
