@@ -14,6 +14,10 @@ public interface ServerInterface extends Remote {
 
 	void leave() throws RemoteException;
 
+	void launch() throws RemoteException;
+
+	void terminate() throws RemoteException;
+
 	Integer getPopulationOfCountry(String[] args) throws RemoteException;
 
 	Integer getPopulationOfCountry(String countryName) throws RemoteException;
@@ -27,5 +31,4 @@ public interface ServerInterface extends Remote {
 	Integer getNumberOfCountries(int cityCount, int minPopulation) throws RemoteException;
 
 	Integer getNumberOfCountries(int cityCount, int minPopulation, int maxPopulation) throws RemoteException;
-
 }

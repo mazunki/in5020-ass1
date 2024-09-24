@@ -3,10 +3,13 @@ package com.ass1.client;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.ass1.LoggerUtil;
+import com.ass1.loadbalancer.ProxyServerInterface;
 
 public class SimulateClient {
 	private static final Logger logger = LoggerUtil.createLogger(SimulateClient.class.getName(), "client", "sim",
@@ -26,6 +30,9 @@ public class SimulateClient {
 	private static int DELAY_QUERIES_1 = 50; // ms
 	private static int DELAY_QUERIES_2 = 20; // ms
 	private static List<ClientTask> tasks = new ArrayList<>();
+
+	private static ProxyServerInterface proxyServer;
+	private static Registry proxyRegistry;
 
 	public static void main(String[] args) throws InterruptedException {
 
@@ -72,9 +79,30 @@ public class SimulateClient {
 		}
 		logger.info("Parsed a total of " + tasks.size() + " tasks");
 
-		SimulateClient.start_tasks(DELAY_QUERIES_1);
+		try {
+			SimulateClient.proxyRegistry = LocateRegistry.getRegistry(Client.PROXY_SERVER,
+					Client.PROXY_PORT);
+		} catch (RemoteException e) {
+			throw new RuntimeException("Could not connect to proxy server... 😅");
+		}
 
+		try {
+			SimulateClient.proxyServer = (ProxyServerInterface) SimulateClient.proxyRegistry
+					.lookup(ProxyServerInterface.PROXY_IDENTIFIER);
+		} catch (RemoteException e) {
+			throw new RuntimeException("Failed to connect with proxy server! 😷" + e.getMessage());
+		} catch (NotBoundException e) {
+			throw new RuntimeException("Failed to find proxy server reference...");
+		}
+
+		SimulateClient.start_tasks(DELAY_QUERIES_1);
 		SimulateClient.start_tasks(DELAY_QUERIES_2);
+
+		try {
+			SimulateClient.proxyServer.stop();
+		} catch (RemoteException e) {
+			logger.severe("Couldn't terminate sesssion");
+		}
 
 		logger.info("All simulations complete");
 	}
@@ -135,6 +163,7 @@ public class SimulateClient {
 				Object result = client.makeQuery(method, arguments);
 
 				ClientTask.addTurnaround(this.method, start_time, System.currentTimeMillis());
+
 				logger.finer(this + "... " + result);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Failed to execute " + this + ". " + e.getMessage());

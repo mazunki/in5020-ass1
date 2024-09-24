@@ -22,5 +22,7 @@ public interface ProxyServerInterface extends Remote {
 
 	public void unregister(ServerInterface server, Identifier zoneId, Identifier serverId) throws RemoteException;
 
+	public void stop() throws RemoteException;
+
 	public ServerInterface getServer(Identifier zoneId) throws RemoteException;
 }

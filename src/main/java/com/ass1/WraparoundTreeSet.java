@@ -54,11 +54,18 @@ public class WraparoundTreeSet<T extends Identifiable & Comparable<T>> extends T
 	}
 
 	public T getObject(T obj) {
-		return this.getObject(obj);
+		if (this.contains(obj)) {
+			for (T element : this) {
+				if (element.equals(obj)) {
+					return element;
+				}
+			}
+		}
+		return null;
 	}
 
 	public void remove(T obj) {
-		this.remove(obj);
+		super.remove(obj);
 	}
 
 	public T getObjectById(Identifier id) {

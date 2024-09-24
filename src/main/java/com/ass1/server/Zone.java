@@ -2,6 +2,7 @@ package com.ass1.server;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ public class Zone implements Identifiable, Comparable<Zone> {
 
 	AtomicInteger ongoingRequests = new AtomicInteger(0);
 	AtomicInteger counter = new AtomicInteger(0);
-	Identifier id;
+	final Identifier id;
 
 	public Zone(Identifier id) {
 		this.id = id;
@@ -116,6 +117,17 @@ public class Zone implements Identifiable, Comparable<Zone> {
 		logger.info(this.toString());
 	}
 
+	public void kill_everyone() throws RemoteException {
+		logger.info("Got request to terminate servers on " + this);
+		for (ServerInterface server : this.servers.keySet()) {
+			try {
+				server.terminate();
+			} catch (RemoteException e) {
+				logger.severe("Couldn't terminate " + server);
+			}
+		}
+	}
+
 	public String toString() {
 		return "Zone<"
 				+ this.id + ", "
@@ -129,11 +141,23 @@ public class Zone implements Identifiable, Comparable<Zone> {
 		return this.id;
 	}
 
-	public void setId(Identifier id) {
-		this.id = id;
-	}
-
 	public int compareTo(Zone z) {
 		return this.id.getValue().compareTo(z.getId().getValue());
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true; // Same reference, so they are equal
+		if (obj == null || getClass() != obj.getClass())
+			return false; // Null or different class
+		Zone otherZone = (Zone) obj; // Cast to Zone
+		return Objects.equals(this.id, otherZone.id); // Compare based on id (identifier)
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id); // Hash based on id, as this uniquely identifies a Zone
+	}
+
 }

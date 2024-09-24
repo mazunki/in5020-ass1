@@ -22,6 +22,8 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 	int maxNeighbourDistance = 2;
 	Registry registry;
 
+	private boolean universe_exists = true;
+
 	public ProxyServer(int port) throws RemoteException {
 		logger.info("Starting proxy server");
 
@@ -30,7 +32,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		logger.info("ProxyServer listening on port " + port);
 	}
 
-	public void register(Zone zone) throws RemoteException {
+	public synchronized void register(Zone zone) throws RemoteException {
 		if (this.zones.getObject(zone) == null) {
 			zones.add(zone);
 			logger.info("Added new zone: " + zone);
@@ -39,24 +41,24 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		}
 	}
 
-	public void registerZone(Identifier zoneId) throws RemoteException {
+	public synchronized void registerZone(Identifier zoneId) throws RemoteException {
 		if (this.zones.getObjectById(zoneId) == null) {
 			Zone zone = new Zone(zoneId);
 			this.zones.add(zone);
-			logger.info("Added new zone: " + zone);
+			logger.info("Added new zone: " + zone + ". Currently got " + this.zones.size() + " zones.");
 		} else {
 			logger.info("Attmpted to register duplicate zone: " + zoneId);
 		}
 	}
 
-	public void startupTask(ServerInterface server, Identifier zoneId) throws RemoteException {
+	public synchronized void startupTask(ServerInterface server, Identifier zoneId) throws RemoteException {
 		Zone zone = this.zones.getObjectById(zoneId);
 		String pre = zone.toString();
 		zone.grabServer(server);
 		logger.fine("Starting task from " + pre + " => " + zone);
 	}
 
-	public void completeTask(ServerInterface server, Identifier zoneId) throws RemoteException {
+	public synchronized void completeTask(ServerInterface server, Identifier zoneId) throws RemoteException {
 		Zone zone = this.zones.getObjectById(zoneId);
 		String pre = zone.toString();
 		zone.releaseServer(server);
@@ -113,17 +115,45 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		return extern_zones.getFirst().getServer();
 	}
 
+	public boolean isAlive() {
+		return this.universe_exists;
+	}
+
 	public void start() {
+		this.universe_exists = true;
 		logger.info("ProxyServer started and ready to receive servers");
-		while (true) {
+		this.spin();
+	}
+
+	public void stop() {
+		logger.info("Got request to terminate universe. Current zonecount: " + this.zones.size());
+		for (Zone zone : this.zones) {
+			try {
+				zone.kill_everyone();
+			} catch (RemoteException e) {
+				logger.severe("Couldn't stop " + zone);
+			}
+		}
+		this.universe_exists = false;
+		logger.info("There is no universe. Get lost.");
+
+		try {
+			UnicastRemoteObject.unexportObject(this, true);
+		} catch (NoSuchObjectException e) {
+			logger.severe("Couldn't unexport proxy server");
+		}
+
+	}
+
+	public void spin() {
+		while (this.isAlive()) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				logger.info("Shutting down Proxy Server");
-				return;
+				this.stop();
 			}
-
 		}
+		logger.info("Stopping proxy loop. Bye!");
 	}
 
 	public static void main(String[] args) throws RemoteException {

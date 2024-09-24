@@ -4,12 +4,17 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.rmi.NotBoundException;
 
@@ -17,25 +22,40 @@ import com.ass1.loadbalancer.*;
 import com.ass1.*;
 
 public class ServerStub implements ServerInterface {
-	private final Logger logger;
 
 	Server server;
-	Identifier zoneId;
+	Identifier id, zoneId;
 	ProxyServerInterface proxyServer;
+
+	volatile boolean world_permits_my_existence;
 
 	private ExecutorService executor;
 	int counter = 0;
 	private static int REPORT_INTERVAL = 18;
-	QueryResultCache cache;
+	private HashMap<String, List<Long>> meter_execution = new HashMap<String, List<Long>>();
+	private HashMap<String, List<Long>> meter_waiting = new HashMap<String, List<Long>>();
 
-	public ServerStub(Server server, Identifier zone) throws RemoteException {
+	QueryResultCache cache;
+	private static final Logger logger = LoggerUtil.createLogger(Server.class.getName(), "server", "server");
+
+	public ServerStub(String serverId, String zoneId) throws RemoteException {
+		this(new Identifier(serverId), new Identifier(zoneId));
+	}
+
+	public ServerStub(Identifier serverId, Identifier zoneId) throws RemoteException {
+		this(new Server(), serverId, zoneId, true);
+	}
+
+	public ServerStub(Server server, Identifier serverId, Identifier zone, boolean enableCache)
+			throws RemoteException {
 		this.zoneId = zone;
 		this.server = server;
-		this.logger = LoggerUtil.createLogger("server-" + this.getRegistryName(), "server", "stub");
-		this.executor = Executors.newFixedThreadPool(1);
-		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT,
-				server.getId().toString());
-		this.registerToProxyServer();
+		this.id = serverId;
+
+		if (enableCache) {
+			Logger cacheLogger = LoggerUtil.deriveLogger(Server.logger, "cache", Level.INFO);
+			this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT, cacheLogger);
+		}
 	}
 
 	private void registerToProxyServer() throws RemoteException {
@@ -53,7 +73,7 @@ public class ServerStub implements ServerInterface {
 			throw new RuntimeException("Could not find anywhere to register ourselves");
 		}
 
-		proxyServer.register(srv, this.zoneId, this.server.getId());
+		proxyServer.register(srv, this.zoneId, this.id);
 
 		logger.info("Registered " + serverRegister + " on proxy server");
 	}
@@ -67,7 +87,7 @@ public class ServerStub implements ServerInterface {
 	}
 
 	public String getRegistryName() {
-		return "server-" + this.server + "@zone-" + this.zoneId;
+		return "server-" + this.id + "@zone-" + this.zoneId;
 	}
 
 	public String getWorkload() {
@@ -80,28 +100,69 @@ public class ServerStub implements ServerInterface {
 		}
 	}
 
+	private void spin() {
+		while (this.isAlive()) {
+		}
+	}
+
+	public void launch() throws RemoteException {
+		this.logger = LoggerUtil.createLogger("server-" + this.getRegistryName(), "server", "stub");
+		this.executor = Executors.newFixedThreadPool(1);
+		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT,
+
+				this.id.toString());
+		this.registerToProxyServer();
+		this.world_permits_my_existence = true;
+
+		try {
+			this.spin();
+		} finally {
+			this.executor.shutdown();
+			try {
+				while (!this.executor.awaitTermination(50, TimeUnit.MILLISECONDS)) {
+					this.executor.shutdownNow();
+				}
+			} catch (InterruptedException e) {
+				this.executor.shutdownNow();
+				logger.warning("Interrupted execution thread");
+			}
+		}
+	}
+
 	public void leave() {
 	}
 
 	public boolean isAlive() {
-		return true;
+		return this.world_permits_my_existence;
 	}
 
-	public void spin() {
-		ServerInterface self = this;
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				try {
-					logger.info("Shutting down " + server);
-					proxyServer.unregister(self, zoneId, server.getId());
-				} catch (RemoteException e) {
-					logger.warning("Failed to unregister " + getRegistryName());
-				}
-			}
-		});
-
-		while (true) {
+	public void report_measurements() {
+		for (Entry<String, List<Long>> entry : this.meter_execution.entrySet()) {
+			double avg = entry.getValue().stream().mapToDouble(Long::longValue).average().orElse(0.0);
+			double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
+			double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
+			logger.info(entry.getKey() +
+					" execution time: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
 		}
+		for (Entry<String, List<Long>> entry : this.meter_waiting.entrySet()) {
+			double avg = entry.getValue().stream().mapToDouble(Long::longValue).average().orElse(0.0);
+			double min = entry.getValue().stream().mapToDouble(Long::longValue).min().orElse(0.0);
+			double max = entry.getValue().stream().mapToDouble(Long::longValue).max().orElse(0.0);
+			logger.info(entry.getKey() +
+					" waiting time: avg " + avg + "ms, min " + min + "ms, max " + max + "ms");
+		}
+	}
+
+	public void terminate() throws RemoteException {
+		this.world_permits_my_existence = false;
+
+		logger.info("Shutting down " + this.id);
+		this.report_measurements();
+
+		proxyServer.unregister((ServerInterface) this, zoneId, this.id);
+		logger.info(this.id + " is now offline.");
+
+		UnicastRemoteObject.unexportObject(this, true);
 	}
 
 	public void simulateExecutionDelay() {
@@ -116,6 +177,20 @@ public class ServerStub implements ServerInterface {
 		ThreadPoolExecutor ex = (ThreadPoolExecutor) this.executor;
 		logger.info("Execution queue contains " + ex.getQueue().size()
 				+ " tasks for " + this.getRegistryName());
+	}
+
+	public void addExecutionMeasurement(String method, long start, long end) {
+		long duration = end - start;
+		List<Long> avgs = this.meter_execution.getOrDefault(method, new ArrayList<>());
+		avgs.add(duration);
+		this.meter_execution.put(method, avgs);
+	}
+
+	public void addWaitingTime(String method, long start, long end) {
+		long duration = end - start;
+		List<Long> avgs = this.meter_waiting.getOrDefault(method, new ArrayList<>());
+		avgs.add(duration);
+		this.meter_waiting.put(method, avgs);
 	}
 
 	private <T> T execute(Callable<T> task, Object[] cache_args, Class<T> return_type) throws RemoteException {
@@ -134,14 +209,24 @@ public class ServerStub implements ServerInterface {
 
 		try {
 			Future<T> future = this.executor.submit(() -> {
+				long start_exec_time = System.currentTimeMillis();
 				this.simulateExecutionDelay();
-				return task.call();
+				T result = task.call();
+				this.addExecutionMeasurement(methodName, start_exec_time,
+						System.currentTimeMillis());
+
+				return result;
 			});
 			logger.finer("Submitted task on " + this.getRegistryName());
 			this.proxyServer.startupTask((ServerInterface) this, this.zoneId);
+
+			long start_time = System.currentTimeMillis();
 			T result = future.get();
+			this.addWaitingTime(methodName, start_time, System.currentTimeMillis());
+
 			this.proxyServer.completeTask((ServerInterface) this, this.zoneId);
 			logger.fine("Completed task on " + this.getRegistryName());
+
 			cache.remember(methodName, cache_args, result);
 			return result;
 
@@ -196,4 +281,14 @@ public class ServerStub implements ServerInterface {
 		return this.zoneId.equals(zoneId);
 	}
 
+	public static void main(String[] args) throws RemoteException {
+		if (args.length < 2) {
+			throw new IllegalArgumentException("Please provide a zone name and a server identifier");
+		}
+
+		// TODO: consider adding support for automatic server identifier names for zone
+
+		ServerStub stub = new ServerStub(args[1], args[0]);
+		stub.launch();
+	}
 }
