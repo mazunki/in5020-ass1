@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.rmi.NotBoundException;
 
@@ -53,7 +54,7 @@ public class ServerStub implements ServerInterface {
 		this.id = serverId;
 
 		if (enableCache) {
-			Logger cacheLogger = LoggerUtil.deriveLogger(Server.logger, "cache", Level.INFO);
+			Logger cacheLogger = LoggerUtil.deriveLogger(ServerStub.logger, "cache", Level.INFO);
 			this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT, cacheLogger);
 		}
 	}
