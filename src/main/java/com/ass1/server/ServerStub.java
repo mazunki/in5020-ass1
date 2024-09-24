@@ -107,7 +107,6 @@ public class ServerStub implements ServerInterface {
 	}
 
 	public void launch() throws RemoteException {
-		this.logger = LoggerUtil.createLogger("server-" + this.getRegistryName(), "server", "stub");
 		this.executor = Executors.newFixedThreadPool(1);
 		this.cache = new QueryResultCache(QueryResultCache.DEFAULT_SERVER_CACHE_LIMIT,
 
