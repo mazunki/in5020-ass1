@@ -27,7 +27,7 @@ public class StopProxyServer {
 			StopProxyServer.proxyServer = (ProxyServerInterface) StopProxyServer.proxyRegistry
 					.lookup(ProxyServerInterface.PROXY_IDENTIFIER);
 		} catch (RemoteException e) {
-			throw new RuntimeException("Failed to connect with proxy server! 😷" + e.getMessage());
+			throw new RuntimeException("Failed to connect with proxy server! 😷\n" + e.getMessage());
 		} catch (NotBoundException e) {
 			throw new RuntimeException("Failed to find proxy server reference...");
 		}

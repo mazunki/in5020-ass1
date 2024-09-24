@@ -6,11 +6,12 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import com.ass1.*;
 
-public class Zone implements Identifiable, Comparable<Zone> {
+public class Zone implements Serializable, Identifiable, Comparable<Zone> {
 	private static final Logger logger = LoggerUtil.createLogger(Zone.class.getName(), "server", "zone");
 
 	public final static int LOCAL_DELAY = 80; // ms
