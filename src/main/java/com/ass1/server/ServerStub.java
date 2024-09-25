@@ -18,12 +18,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 
 import com.ass1.loadbalancer.*;
 import com.ass1.*;
 
-public class ServerStub implements ServerInterface {
+public class ServerStub extends UnicastRemoteObject implements ServerInterface {
 
 	Server server;
 	Identifier id, zoneId;
@@ -61,13 +62,14 @@ public class ServerStub implements ServerInterface {
 	}
 
 	private void registerToProxyServer() throws RemoteException {
-		String serverRegister = this.getRegistryName();
+		Identifier serverRegister = this.getRegistryName();
 
 		logger.info("Connecting to ProxyServer from " + serverRegister);
 
 		Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1099);
 
-		ServerInterface srv = (ServerInterface) UnicastRemoteObject.exportObject(this, 0);
+		// ServerInterface srv = (ServerInterface)
+		// UnicastRemoteObject.exportObject(this, 0);
 
 		try {
 			proxyServer = (ProxyServerInterface) registry.lookup(ProxyServer.PROXY_IDENTIFIER);
@@ -75,7 +77,13 @@ public class ServerStub implements ServerInterface {
 			throw new RuntimeException("Could not find anywhere to register ourselves");
 		}
 
-		proxyServer.register(srv, this.zoneId, this.id);
+		proxyServer.register(this, this.zoneId, this.id);
+		try {
+			registry.bind(this.getRegistryName().toString(), this);
+		} catch (AlreadyBoundException e) {
+			logger.severe("Tried to bind already existing server. Did we replace someone else?");
+			registry.rebind(this.getRegistryName().toString(), this);
+		}
 
 		logger.info("Registered " + serverRegister + " on proxy server");
 	}
@@ -88,8 +96,8 @@ public class ServerStub implements ServerInterface {
 		}
 	}
 
-	public String getRegistryName() {
-		return "server-" + this.id + "@zone-" + this.zoneId;
+	public Identifier getRegistryName() {
+		return new Identifier("server-" + this.id + "@zone-" + this.zoneId);
 	}
 
 	public String getWorkload() {

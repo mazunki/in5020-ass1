@@ -83,12 +83,12 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		logger.info("Registered new server '" + serverId + "' on " + zone);
 	}
 
-	public ServerInterface getServer(Identifier zoneId) throws NoSuchObjectException {
+	public Identifier findServer(Identifier zoneId) throws NoSuchObjectException {
 		Zone local_zone = this.zones.getObjectById(zoneId);
 
 		if (local_zone.isAvailable()) {
 			logger.fine("Found local zone for " + zoneId + ": " + local_zone);
-			return local_zone.getServer();
+			return local_zone.findServer();
 		}
 
 		Iterator<Zone> zones = this.zones.iterator(local_zone, this.maxNeighbourDistance);
@@ -104,7 +104,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		if (extern_zones.size() == 0) {
 			// no extern zones were helpful, let's just do it ourselves. sigh.
 			logger.fine("Local zone was busy, but so was everyone else. Using " + local_zone);
-			return local_zone.getServer();
+			return local_zone.findServer();
 		}
 
 		extern_zones.sort(Comparator.comparingInt(Zone::getRequestCount));
@@ -112,7 +112,7 @@ public class ProxyServer extends UnicastRemoteObject implements ProxyServerInter
 		logger.fine("Local zone was busy. Found " + extern_zones.size()
 				+ " volunteering neighbours. Using " + extern_zones.getFirst());
 
-		return extern_zones.getFirst().getServer();
+		return extern_zones.getFirst().findServer();
 	}
 
 	public boolean isAlive() {

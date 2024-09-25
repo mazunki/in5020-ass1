@@ -18,6 +18,8 @@ public interface ServerInterface extends Remote {
 
 	void terminate() throws RemoteException;
 
+	Identifier getRegistryName() throws RemoteException;
+
 	Integer getPopulationOfCountry(String[] args) throws RemoteException;
 
 	Integer getPopulationOfCountry(String countryName) throws RemoteException;

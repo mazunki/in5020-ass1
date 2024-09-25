@@ -48,6 +48,38 @@ public class Zone implements Serializable, Identifiable, Comparable<Zone> {
 		throw new RuntimeException("wtf was this?");
 	}
 
+	public Identifier findServer() {
+		/*
+		 * returns a handle for an idling server, falling back to a random one.
+		 * assumes zone has at least one server in its pool
+		 */
+		if (this.servers.size() == 0) {
+			return null;
+		}
+
+		for (Map.Entry<ServerInterface, Integer> pair : this.servers.entrySet()) {
+			if (pair.getValue() == 0) {
+				ServerInterface s = pair.getKey();
+				logger.fine("Found idling server in " + this);
+				this.servers.put(s, 1);
+				try {
+					return s.getRegistryName();
+				} catch (RemoteException e) {
+					logger.severe("Couldn't get registry name of idling server");
+				}
+			}
+		}
+		logger.fine("All servers in zone " + this + " were busy!");
+		ServerInterface s = (new ArrayList<>(this.servers.keySet())).get(random.nextInt(this.servers.size()));
+
+		try {
+			return s.getRegistryName();
+		} catch (RemoteException e) {
+			logger.severe("Couldn't get registry name of non-idling server. Returning NO server identifer.");
+			return null;
+		}
+	}
+
 	public ServerInterface getServer() {
 		/*
 		 * returns the first idle server on the zone, falling back to a random one.

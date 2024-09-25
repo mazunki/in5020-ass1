@@ -24,5 +24,5 @@ public interface ProxyServerInterface extends Remote {
 
 	public void stop() throws RemoteException;
 
-	public ServerInterface getServer(Identifier zoneId) throws RemoteException;
+	public Identifier findServer(Identifier zoneId) throws RemoteException;
 }

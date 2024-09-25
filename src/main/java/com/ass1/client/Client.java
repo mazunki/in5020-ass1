@@ -57,11 +57,19 @@ public class Client {
 		}
 
 		try {
-			this.server = this.proxyServer.getServer(new Identifier(zoneId));
+			Identifier serverId = this.proxyServer.findServer(new Identifier(zoneId));
+			try {
+				this.server = (ServerInterface) this.proxyRegistry.lookup(serverId.toString());
+			} catch (NotBoundException e) {
+				throw new RuntimeException(
+						"Tried to look up an invalid handle for a server on the registry: "
+								+ serverId);
+			}
 		} catch (NoSuchObjectException e) {
 			throw new RuntimeException(
 					"Failed to get an available server for '" + this.zoneId
 							+ "' neighbourhood... does this zone exist?");
+
 		} catch (RemoteException e) {
 			throw new RuntimeException("Failed to request a zone on proxy server! 😷");
 		}
