@@ -33,7 +33,7 @@ public class ServerStub implements ServerInterface {
 
 	private ExecutorService executor;
 	int counter = 0;
-	private static int REPORT_INTERVAL = 18;
+	private static int REPORT_INTERVAL = 1;
 	private volatile HashMap<String, List<Long>> meter_execution = new HashMap<String, List<Long>>();
 	private volatile HashMap<String, List<Long>> meter_waiting = new HashMap<String, List<Long>>();
 
