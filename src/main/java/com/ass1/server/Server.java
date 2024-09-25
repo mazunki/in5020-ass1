@@ -55,10 +55,10 @@ public class Server implements ServerInterfaceImpl {
 
 		for (Geoname city : GeonameLoader.getCities()) {
 			int population = city.getPopulation();
-			String cityName = city.getCountryName();
+			String countryName = city.getCountryName();
 
 			if (population >= minPopulation) {
-				cityCounter.put(cityName, cityCounter.getOrDefault(cityName, 0) + 1);
+				cityCounter.put(countryName, cityCounter.getOrDefault(countryName, 0) + 1);
 			}
 		}
 		return (int) cityCounter.values().stream().filter(count -> count >= cityCount).count();
@@ -69,10 +69,10 @@ public class Server implements ServerInterfaceImpl {
 
 		for (Geoname city : GeonameLoader.getCities()) {
 			int population = city.getPopulation();
-			String cityName = city.getCountryName();
+			String countryName = city.getCountryName();
 
 			if (population >= minPopulation && population <= maxPopulation) {
-				cityCounter.put(cityName, cityCounter.getOrDefault(cityName, 0) + 1);
+				cityCounter.put(countryName, cityCounter.getOrDefault(countryName, 0) + 1);
 			}
 		}
 		return (int) cityCounter.values().stream().filter(count -> count >= cityCount).count();
