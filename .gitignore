@@ -1,3 +1,6 @@
+*.tar
+*.tar.gz
+
 log/
 bin/*
 target/*
